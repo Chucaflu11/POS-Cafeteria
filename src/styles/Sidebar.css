@@ -1,0 +1,23 @@
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 10vh; /* Position the sidebar below the header */
+    bottom: 0;
+    width: 300px; /* Set the width relative to the viewport width */
+    background-color: #F2F2F2;
+    padding: 1em; /* Use em for padding */
+    overflow: auto;
+}
+
+.sidebar h2 {
+    margin-top: 0;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar li {
+    margin-bottom: 1em; /* Use em for margin */
+}

@@ -1,0 +1,21 @@
+.header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(to right, #8C4A32, #6C0303);
+    height: 10vh; /* Set a specific height for the header */
+    box-sizing: border-box;
+}
+
+.header .logo {
+    height: 100%; /* Adjust the height of the logo */
+    margin-right: 1em;
+}
+
+.header h1 {
+    color: white;
+    margin: 0;
+    font-size: 2em;
+}

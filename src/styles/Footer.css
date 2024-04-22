@@ -1,0 +1,23 @@
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 300px; /* Adjusted to align to the right of the sidebar */
+}
+
+.footer .button-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Adjust the minimum size for the grid items */
+    gap: 1em;
+    width: 30%;
+    margin: 0 auto;
+    min-height: 50px;
+}
+
+.footer button {
+    color: white;
+    background-color: #A63E26;
+    border: none;
+    height: 50px;
+    border-radius: 10px;
+    min-width: 100px; /* Uses min-width so that the buttons have at least this width */
+}

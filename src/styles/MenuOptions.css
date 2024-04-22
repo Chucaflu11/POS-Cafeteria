@@ -1,0 +1,18 @@
+.menu-options {
+    position: absolute;
+    left: 30vw; /* Position the menu options to the right of the sidebar */
+    top: 10vh; /* Position the menu options below the header */
+    width: 70vw; /* Set the width relative to the viewport width */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-gap: 1em;
+    padding: 1em;
+}
+
+.menu-options button {
+    background-color: #F2F2F2;
+    border: none;
+    text-align: center;
+    height: 50px; /* Set a fixed height for the buttons */
+    border-radius: 10px; /* Round the borders of the buttons */
+}
