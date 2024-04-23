@@ -4,7 +4,29 @@ import React from 'react';
 import '../styles/MenuOptions.css';
 
 function MenuOptions({ setSelectedCategory }) {
-  const categories = ['Bebidas', 'Pasteles', 'Sandwiches']; // Ejemplo de categorías
+  const categories = [
+    'Bebidas calientes',
+    'Bebidas frías',
+    'Postres',
+    'Desayunos',
+    'Almuerzos',
+    'Cena',
+    'Snacks',
+    'Ensaladas',
+    'Sopas',
+    'Pizza',
+    'Hamburguesas',
+    'Sushi',
+    'Comida mexicana',
+    'Comida italiana',
+    'Comida asiática',
+    'Comida rápida',
+    'Comida gourmet',
+    'Vegetariano',
+    'Vegano',
+    'Comida casera'
+  ];
+  
 
   return (
     <div className="menu-options">

@@ -8,7 +8,7 @@ function Sidebar({ cart }) {
     <aside className="sidebar">
       <h2>Resumen de la boleta</h2>
       <ul>
-        {cart.map((item, index) => (
+        {Array.isArray(cart) && cart.map((item, index) => (
           <li key={index}>{item.name}</li>
         ))}
       </ul>

@@ -6,26 +6,29 @@ import Footer from './Footer';
 import MenuOptions from './MenuOptions';
 import CategoryProducts from './CategoryProducts';
 
+import '../styles/App.css'
+
 function App() {
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [cart, setCart] = useState([]);
 
   return (
     <div className="app">
       <Header />
-      <div className="content">
-        <Sidebar cart={cart} />
-        {selectedCategory ? (
-          <CategoryProducts
-            category={selectedCategory}
-            cart={cart}
-            setCart={setCart}
-          />
-        ) : (
-          <MenuOptions setSelectedCategory={setSelectedCategory} />
-        )}
+      <div className='main-content'>
+        <div className="content">
+          <Sidebar />
+          <div className="content-right">
+            {selectedCategory ? (
+              <CategoryProducts
+                category={selectedCategory}
+              />
+            ) : (
+              <MenuOptions setSelectedCategory={setSelectedCategory} />
+            )}
+            <Footer />
+          </div>
+        </div>
       </div>
-      <Footer />
     </div>
   );
 }
