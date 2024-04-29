@@ -3,14 +3,15 @@
     height: 300px;
     clear: both;
     bottom: 0;
+    border-top: 1px solid #A63E26
   }
 
 .footer .button-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Adjust the minimum size for the grid items */
-    gap: 1em;
+    grid-template-columns: repeat(6, 1fr); /* Adjust the minimum size for the grid items */
+    gap: 3em;
     width: 30%;
-    margin: 0 auto;
+    padding: 1rem;
     min-height: 50px;
 }
 
@@ -18,7 +19,11 @@
     color: white;
     background-color: #A63E26;
     border: none;
-    height: 50px;
-    border-radius: 10px;
-    min-width: 100px; /* Uses min-width so that the buttons have at least this width */
+    font-size: 1rem;
+    text-align: center;
+    min-height: 80px; /* Set a fixed height for the buttons */
+    min-width: 100px;
+    border-radius: 10px; /* Round the borders of the buttons */
+    cursor: pointer; /* Cambiar el cursor al pasar sobre los botones */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Agregar una sombra suave */
 }

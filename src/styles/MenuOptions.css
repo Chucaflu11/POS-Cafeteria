@@ -1,17 +1,23 @@
 .menu-options {
   flex-grow: 1;
-  margin-left: 300px; /* sidebar width */
-  padding: 20px;
+  padding: 1rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Crear columnas con un ancho mínimo de 100px */
-  grid-gap: 1em; /* Espacio entre los botones */
+  grid-template-columns:  repeat(6, 1fr);
+  grid-gap: 3rem; /* Espacio entre los botones */
 }
 
 .menu-options button {
   background-color: #F2F2F2;
   border: none;
+  font-size: 1rem;
   text-align: center;
-  height: 50px; /* Set a fixed height for the buttons */
+  min-height: 80px; /* Set a fixed height for the buttons */
+  min-width: 100px;
   border-radius: 10px; /* Round the borders of the buttons */
   cursor: pointer; /* Cambiar el cursor al pasar sobre los botones */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Agregar una sombra suave */
+}
+
+.menu-options button:hover {
+  background-color: #DCDCDC;
 }

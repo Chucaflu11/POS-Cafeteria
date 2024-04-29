@@ -1,7 +1,7 @@
 .header {
     display: flex;
     width: 100%;
-    height: 60px; /* or whatever height you want */
+    height: 60px;
     background: linear-gradient(to right, #8C4A32, #6C0303);
   }
 
@@ -12,6 +12,6 @@
 
 .header h1 {
     color: white;
-    margin: 0;
+    padding-top: .5rem;
     font-size: 2em;
 }
