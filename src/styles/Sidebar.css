@@ -1,20 +1,31 @@
 .sidebar {
     width: 300px;
-    height: calc(100vh - 60px); /* height of viewport minus header height */
+    height: 100%;
     background-color: #F2F2F2;
     float: left;
-  }
-  
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+}
 
 .sidebar h2 {
-    margin-top: 0;
+    font-style: bold;
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid black;
 }
 
 .sidebar ul {
     list-style-type: none;
-    padding: 0;
+    padding-top: 1rem;
+    margin: 0;
+    width: 100%;
 }
 
 .sidebar li {
-    margin-bottom: 1em; /* Use em for margin */
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1em;
+    padding: 0 1rem 0 1rem;
 }

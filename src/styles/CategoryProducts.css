@@ -6,7 +6,7 @@
     padding: 1rem; /* Quitar el relleno del contenedor */
   }
   
-  .category-products button {
+.category-products button {
     background-color: #F2F2F2;
     border: none;
     font-size: 1rem;
@@ -16,9 +16,9 @@
     border-radius: 10px; /* Round the borders of the buttons */
     cursor: pointer; /* Cambiar el cursor al pasar sobre los botones */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Agregar una sombra suave */
-  }
+}
   
-  .category-products button:hover {
+.category-products button:hover {
     background-color: #DCDCDC;
-  }
+}
   

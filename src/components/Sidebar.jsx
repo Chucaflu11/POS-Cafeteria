@@ -9,7 +9,10 @@ function Sidebar({ cart }) {
       <h2>Resumen de la boleta</h2>
       <ul>
         {Array.isArray(cart) && cart.map((item, index) => (
-          <li key={index}>{item.name}</li>
+          <li key={index}>
+            <span>{item.name}</span>
+            <span>${item.price}</span>
+          </li>
         ))}
       </ul>
     </aside>

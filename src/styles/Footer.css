@@ -3,16 +3,18 @@
     height: 300px;
     clear: both;
     bottom: 0;
-    border-top: 1px solid #A63E26
+    border-top: 1px solid #A63E26;
+    flex-grow: 1;
   }
 
 .footer .button-container {
     display: grid;
-    grid-template-columns: repeat(6, 1fr); /* Adjust the minimum size for the grid items */
+    grid-template-columns: repeat(6, 1fr);
     gap: 3em;
     width: 30%;
     padding: 1rem;
     min-height: 50px;
+    flex-grow: 1;
 }
 
 .footer button {
@@ -21,9 +23,13 @@
     border: none;
     font-size: 1rem;
     text-align: center;
-    min-height: 80px; /* Set a fixed height for the buttons */
+    min-height: 80px;
     min-width: 100px;
-    border-radius: 10px; /* Round the borders of the buttons */
-    cursor: pointer; /* Cambiar el cursor al pasar sobre los botones */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Agregar una sombra suave */
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.footer button:hover {
+    background-color: #c06955;
 }
