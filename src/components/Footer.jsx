@@ -11,7 +11,7 @@ function Footer({ cart, setCart }) {
   return (
     <footer className="footer">
       <div className="button-container">
-        <button onClick={removeLastItem}>Remove Last Item</button>
+        <button onClick={removeLastItem}>Remover último ítem</button>
         <button>Botón 2</button>
         <button>Botón 3</button>
         <button>Botón 4</button>

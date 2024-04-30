@@ -3,36 +3,13 @@ import React from 'react';
 
 import '../styles/MenuOptions.css';
 
-function MenuOptions({ setSelectedCategory }) {
-  const categories = [
-    'Bebidas calientes',
-    'Bebidas frías',
-    'Postres',
-    'Desayunos',
-    'Almuerzos',
-    'Cena',
-    'Snacks',
-    'Ensaladas',
-    'Sopas',
-    'Pizza',
-    'Hamburguesas',
-    'Sushi',
-    'Comida mexicana',
-    'Comida italiana',
-    'Comida asiática',
-    'Comida rápida',
-    'Comida gourmet',
-    'Vegetariano',
-    'Vegano',
-    'Comida casera'
-  ];
-  
+function MenuOptions({ setSelectedCategory, categories }) {
 
   return (
     <div className="menu-options">
       {categories.map((category, index) => (
         <button key={index} onClick={() => setSelectedCategory(category)}>
-          {category}
+          {category.name}
         </button>
       ))}
     </div>
