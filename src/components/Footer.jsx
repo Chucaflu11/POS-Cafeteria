@@ -1,12 +1,17 @@
 import React from 'react';
-
 import '../styles/Footer.css';
 
-function Footer() {
+function Footer({ cart, setCart }) {
+  const removeLastItem = () => {
+    const newCart = [...cart];
+    newCart.pop();
+    setCart(newCart);
+  };
+
   return (
     <footer className="footer">
       <div className="button-container">
-        <button>Botón 1</button>
+        <button onClick={removeLastItem}>Remove Last Item</button>
         <button>Botón 2</button>
         <button>Botón 3</button>
         <button>Botón 4</button>

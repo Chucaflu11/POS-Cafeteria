@@ -27,7 +27,7 @@ function App() {
             ) : (
               <MenuOptions setSelectedCategory={setSelectedCategory} />
             )}
-            <Footer />
+            <Footer cart={cart} setCart={setCart} />
           </div>
         </div>
       </div>
