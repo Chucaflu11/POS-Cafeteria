@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Footer from './Footer';
 import MenuOptions from './MenuOptions';
 import CategoryProducts from './CategoryProducts';
+import ComplementSidebar from './ComplementSidebar';
 
 import '../styles/App.css'
 
@@ -178,18 +179,21 @@ function App() {
         <div className="content">
           <Sidebar cart={cart} />
           <div className="content-right">
-            {selectedCategory ? (
-              <CategoryProducts
-                category={selectedCategory}
-                cart={cart}
-                setCart={setCart}
-              />
-            ) : (
-              <MenuOptions 
-                setSelectedCategory={setSelectedCategory} 
-                categories={categories} 
-              />
-            )}
+            <div className="main-buttons">
+              {selectedCategory ? (
+                <CategoryProducts
+                  category={selectedCategory}
+                  cart={cart}
+                  setCart={setCart}
+                />
+              ) : (
+                <MenuOptions
+                  setSelectedCategory={setSelectedCategory}
+                  categories={categories}
+                />
+              )}
+              <ComplementSidebar cart={cart} setCart={setCart} />
+            </div>
             <Footer cart={cart} setCart={setCart} />
           </div>
         </div>

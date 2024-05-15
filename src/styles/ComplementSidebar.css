@@ -1,0 +1,33 @@
+.ComplementSidebar {
+    width: 100px;
+    height: 100%;
+    clear: both;
+    flex-grow: 1;
+    padding-right: 1.5em;
+  }
+
+.ComplementSidebar .button-container {
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 1em;
+    padding: 0.5rem;
+    min-height: 50px;
+    flex-grow: 1;
+}
+
+.ComplementSidebar button {
+    color: white;
+    background-color: #A63E26;
+    border: none;
+    font-size: 1rem;
+    text-align: center;
+    min-height: 80px;
+    min-width: 100px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ComplementSidebar button:hover {
+    background-color: #c06955;
+}

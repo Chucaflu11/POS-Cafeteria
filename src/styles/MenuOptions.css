@@ -1,5 +1,4 @@
 .menu-options {
-  flex-grow: 1;
   padding: 1rem;
   display: grid;
   grid-template-columns:  repeat(6, 1fr);

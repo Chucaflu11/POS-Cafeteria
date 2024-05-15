@@ -1,6 +1,10 @@
+.category-products {
+    overflow-y: auto; /* Habilita el scroll vertical */
+}
+
 .category-products ul {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);/* Columnas automáticas con un ancho mínimo de 150px */
+    grid-template-columns: repeat(6, 1fr);
     grid-gap: 20px; /* Espacio entre las columnas */
     list-style: none; /* Quitar los marcadores de lista */
     padding: 1rem; /* Quitar el relleno del contenedor */
@@ -11,7 +15,7 @@
     border: none;
     font-size: 1rem;
     text-align: center;
-    min-height: 80px; /* Set a fixed height for the buttons */
+    min-height: 80px;
     min-width: 100px;
     border-radius: 10px; /* Round the borders of the buttons */
     cursor: pointer; /* Cambiar el cursor al pasar sobre los botones */
