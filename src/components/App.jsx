@@ -192,8 +192,8 @@ function App() {
                   categories={categories}
                 />
               )}
+              </div>
               <ComplementSidebar cart={cart} setCart={setCart} />
-            </div>
             <Footer cart={cart} setCart={setCart} />
           </div>
         </div>

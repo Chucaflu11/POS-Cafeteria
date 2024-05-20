@@ -1,9 +1,11 @@
 .ComplementSidebar {
+    position: fixed;
+    right: 0;
     width: 100px;
     height: 100%;
     clear: both;
-    flex-grow: 1;
-    padding-right: 1.5em;
+    padding: 1.5rem;
+    margin-left: auto;
   }
 
 .ComplementSidebar .button-container {
