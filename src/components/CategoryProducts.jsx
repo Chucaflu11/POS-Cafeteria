@@ -13,7 +13,6 @@ function CategoryProducts({ category, cart, setCart }) {
 
       const calculatedColumnCount = Math.max(
         Math.floor(containerWidth / columnWidth),
-        category.products.length,
         minColumnCount
       );
 

@@ -9,8 +9,6 @@ import ComplementSidebar from './ComplementSidebar';
 import '../styles/App.css'
 
 function App() {
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [cart, setCart] = useState([]);
 
   const categories = [
     {
@@ -79,98 +77,10 @@ function App() {
         { id: 36, name: 'Batido de proteínas', price: 5.5 }
       ],
     },
-    {
-      name: 'Almuerzos',
-      products: [
-      ],
-    },
-    {
-      name: 'Cenas',
-      products: [
-      ],
-    },
-    {
-      name: 'Bebidas alcohólicas',
-      products: [
-      ],
-    },
-    {
-      name: 'Snacks',
-      products: [
-      ],
-    },
-    {
-      name: 'Platos principales',
-      products: [
-      ],
-    },
-    {
-      name: 'Entradas',
-      products: [
-      ],
-    },
-    {
-      name: 'Guarniciones',
-      products: [
-      ],
-    },
-    {
-      name: 'Sopas',
-      products: [
-      ],
-    },
-    {
-      name: 'Salsas',
-      products: [
-      ],
-    },
-    {
-      name: 'Postres',
-      products: [
-      ],
-    },
-    {
-      name: 'Desayunos',
-      products: [
-      ],
-    },
-    {
-      name: 'Café',
-      products: [
-      ],
-    },
-    {
-      name: 'Té',
-      products: [
-      ],
-    },
-    {
-      name: 'Jugos',
-      products: [
-      ],
-    },
-    {
-      name: 'Refrescos',
-      products: [
-      ],
-    },
-    {
-      name: 'Cervezas',
-      products: [
-      ],
-    },
-    {
-      name: 'Vinos',
-      products: [
-      ],
-    },
-    {
-      name: 'Licores',
-      products: [
-      ],
-    },
 ];
 
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const [cart, setCart] = useState([]);
 
   return (
     <div className="app">
@@ -179,22 +89,15 @@ function App() {
         <div className="content">
           <Sidebar cart={cart} />
           <div className="content-right">
-            <div className="main-buttons">
-              {selectedCategory ? (
-                <CategoryProducts
-                  category={selectedCategory}
-                  cart={cart}
-                  setCart={setCart}
-                />
-              ) : (
-                <MenuOptions
-                  setSelectedCategory={setSelectedCategory}
-                  categories={categories}
-                />
-              )}
-              </div>
+          <div className="main-buttons">
+              <CategoryProducts
+                category={selectedCategory}
+                cart={cart}
+                setCart={setCart}
+              />
+            </div>
               <ComplementSidebar cart={cart} setCart={setCart} setSelectedCategory={setSelectedCategory} />
-            <Footer cart={cart} setCart={setCart} />
+            <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
           </div>
         </div>
       </div>

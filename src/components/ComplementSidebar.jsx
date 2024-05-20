@@ -1,23 +1,22 @@
 import React from 'react';
 import '../styles/ComplementSidebar.css';
 
-function ComplementSidebar({ cart, setCart, setSelectedCategory }) {
+function ComplementSidebar({ cart, setCart }) {
   const removeLastItem = () => {
     const newCart = [...cart];
     newCart.pop();
     setCart(newCart);
   };
 
-  const goBackToCategories = () => {
-    setSelectedCategory(null);
-  };
-
   return (
     <div className="ComplementSidebar">
       <div className="button-container">
         <button onClick={removeLastItem}>Remover último ítem</button>
-        <button onClick={goBackToCategories}> Retroceder </button>
+        <button>Botón 2</button>
         <button>Botón 3</button>
+        <button>Botón 4</button>
+        <button>Botón 5</button>
+        <button>Botón 6</button>
       </div>
     </div>
   );
