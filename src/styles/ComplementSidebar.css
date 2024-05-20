@@ -4,8 +4,6 @@
     width: 100px;
     height: 100%;
     clear: both;
-    padding: 1.5rem;
-    margin-left: auto;
   }
 
 .ComplementSidebar .button-container {
@@ -13,8 +11,6 @@
     grid-template-rows: repeat(6, 1fr);
     gap: 1em;
     padding: 0.5rem;
-    min-height: 50px;
-    flex-grow: 1;
 }
 
 .ComplementSidebar button {
@@ -23,8 +19,8 @@
     border: none;
     font-size: 1rem;
     text-align: center;
-    min-height: 80px;
-    min-width: 100px;
+    height: 80px;
+    width: 80px;
     border-radius: 10px;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);

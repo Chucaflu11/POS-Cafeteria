@@ -193,7 +193,7 @@ function App() {
                 />
               )}
               </div>
-              <ComplementSidebar cart={cart} setCart={setCart} />
+              <ComplementSidebar cart={cart} setCart={setCart} setSelectedCategory={setSelectedCategory} />
             <Footer cart={cart} setCart={setCart} />
           </div>
         </div>
