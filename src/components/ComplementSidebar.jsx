@@ -1,4 +1,5 @@
-import React from 'react';
+import React, {useState} from 'react';
+import FormularioCategoria from './CategoryForm';
 import '../styles/ComplementSidebar.css';
 
 function ComplementSidebar({ cart, setCart }) {
@@ -8,11 +9,24 @@ function ComplementSidebar({ cart, setCart }) {
     setCart(newCart);
   };
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="ComplementSidebar">
       <div className="button-container">
         <button onClick={removeLastItem}>Remover último ítem</button>
-        <button>Botón 2</button>
+        <button onClick={openModal}>Agregar Categoría</button>
+        {isModalOpen && (
+          <FormularioCategoria closeModal={closeModal} />
+        )}
         <button>Botón 3</button>
         <button>Botón 4</button>
         <button>Botón 5</button>
