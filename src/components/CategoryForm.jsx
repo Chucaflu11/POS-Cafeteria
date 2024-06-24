@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import '../styles/CategoryForm.css';
 
 
-const FormularioCategoria = ({ closeModal }) => {
+const CategoryForm = ({ closeModal }) => {
   const [categoryName, setCategoryName] = useState('');
   const [error, setError] = useState('');
   
@@ -21,6 +21,7 @@ const FormularioCategoria = ({ closeModal }) => {
     }
 
     invoke("add_category", { nombre: categoryName });
+    closeModal();
   };
 
     return (
@@ -48,4 +49,4 @@ const FormularioCategoria = ({ closeModal }) => {
     );
   };
   
-  export default FormularioCategoria;
+  export default CategoryForm;

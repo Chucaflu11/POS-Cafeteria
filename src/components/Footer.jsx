@@ -31,7 +31,7 @@ function Footer({ setSelectedCategory, categories }) {
       <div className="footer-button-container" style={{ gridTemplateColumns: `repeat(${gridColumnCount}, 1fr)` }}>
         {categories.map((category, index) => (
           <button key={index} onClick={() => setSelectedCategory(category)}>
-            {category.name}
+            {category.nombre_categoria}
           </button>
         ))}
       </div>

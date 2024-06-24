@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
-import MenuOptions from './MenuOptions';
 import CategoryProducts from './CategoryProducts';
 import ComplementSidebar from './ComplementSidebar';
 
@@ -13,28 +12,30 @@ import '../styles/App.css'
 function App() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null); // Inicialmente nulo
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const categoriesData = await invoke('get_categories');
-        setCategories(categoriesData);
 
-        const productsData = await invoke('get_products');
-        setProducts(productsData);
+  async function fetchData() {
+    try {
+      const categoriesData = await invoke('get_categories');
+      setCategories(categoriesData);
 
-        // Establecer la primera categoría como seleccionada si hay datos
-        if (categoriesData.length > 0) {
-          setSelectedCategory(categoriesData[0]);
-        }
-      } catch (error) {
-        console.error('Error al obtener datos de la base de datos:', error);
-        // ... (manejo de errores, mostrar mensaje al usuario, etc.)
+      const productsData = await invoke('get_products');
+      setProducts(productsData);
+
+      // Establecer la primera categoría como seleccionada si hay datos
+      if (categoriesData.length > 0) {
+        setSelectedCategory(categoriesData[0]);
       }
+      console.log("Fetched");
+    } catch (error) {
+      console.error('Error al obtener datos de la base de datos:', error);
+      // ... (manejo de errores, mostrar mensaje al usuario, etc.)
     }
+  }
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -46,9 +47,8 @@ function App() {
           <Sidebar cart={cart} />
           <div className="content-right">
             <div className="main-buttons">
-              {selectedCategory && ( // Renderizar solo si selectedCategory no es nulo
+              {selectedCategory && (
                 <CategoryProducts
-                  category={selectedCategory}
                   products={products.filter(
                     (product) => product.id_categoria === selectedCategory.id_categoria
                   )}
@@ -61,6 +61,7 @@ function App() {
               cart={cart}
               setCart={setCart}
               setSelectedCategory={setSelectedCategory}
+              fetchData={fetchData}
             />
             <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
           </div>

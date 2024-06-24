@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../styles/CategoryProducts.css';
 
-function CategoryProducts({ category, cart, setCart }) {
+function CategoryProducts({products, cart, setCart }) {
   const [gridColumnCount, setGridColumnCount] = useState(1);
   const categoryProductsRef = useRef(null);
 
@@ -24,7 +24,7 @@ function CategoryProducts({ category, cart, setCart }) {
     return () => {
       window.removeEventListener('resize', calculateColumns);
     };
-  }, [category.products]);
+  }, [products]);
 
   const addToCart = (product) => {
     setCart([...cart, product]);
@@ -33,7 +33,7 @@ function CategoryProducts({ category, cart, setCart }) {
   return (
     <div className="category-products" ref={categoryProductsRef}>
       <ul className="category-products-list" style={{ gridTemplateColumns: `repeat(${gridColumnCount}, 1fr)` }}>
-        {category.products.map((product) => (
+        {products.map((product) => (
           <li key={product.id}>
             <button onClick={() => addToCart(product)}>
               {product.name}

@@ -127,7 +127,6 @@ fn add_category(app_handle: AppHandle, nombre: &str) -> Result<(), String> {
             params![nombre],
         )
         .map_err(|e| e.to_string())?;
-        println!("Category added");
         Ok(())
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
