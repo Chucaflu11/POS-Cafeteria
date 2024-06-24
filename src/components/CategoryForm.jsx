@@ -20,7 +20,7 @@ const FormularioCategoria = ({ closeModal }) => {
       return;
     }
 
-    invoke("add_category", { name: categoryName });
+    invoke("add_category", { nombre: categoryName });
   };
 
     return (

@@ -1,20 +1,46 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use rusqlite::{params, Connection, NO_PARAMS};
+use serde::{Deserialize, Serialize};
 use std::fs;
-use rusqlite::{params, Connection};
 use tauri::{AppHandle, Manager};
 
+// Data Models
+#[derive(Debug, Deserialize, Serialize)]
+struct Category {
+    id_categoria: i32,
+    nombre_categoria: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Product {
+    id_producto: i32,
+    nombre_producto: String,
+    id_categoria: i32,
+    precio_producto: i32,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Topping {
+    id_agregado: i32,
+    nombre_agregado: String,
+    costo_agregado: i32,
+}
+
 pub struct AppState {
-  pub db: std::sync::Mutex<Option<Connection>>,
+    pub db: std::sync::Mutex<Option<Connection>>,
 }
 
 fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
-    let app_dir = app_handle.path_resolver().app_data_dir().expect("The app data directory should exist.");
+    let app_dir = app_handle
+        .path_resolver()
+        .app_data_dir()
+        .expect("The app data directory should exist.");
     fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
     let sqlite_path = app_dir.join("MyApp.sqlite");
 
     let db = Connection::open(sqlite_path)?;
-
+    println!("Database initialized");
     Ok(db)
 }
 
@@ -85,6 +111,8 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
         ",
     )?;
 
+    println!("Database schema created");
+
     Ok(())
 }
 
@@ -99,6 +127,7 @@ fn add_category(app_handle: AppHandle, nombre: &str) -> Result<(), String> {
             params![nombre],
         )
         .map_err(|e| e.to_string())?;
+        println!("Category added");
         Ok(())
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
@@ -106,7 +135,12 @@ fn add_category(app_handle: AppHandle, nombre: &str) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn add_product(app_handle: AppHandle, nombre: &str, id_categoria: i32, precio: i32) -> Result<(), String> {
+fn add_product(
+    app_handle: AppHandle,
+    nombre: &str,
+    id_categoria: i32,
+    precio: i32,
+) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
     let mut conn = state.db.lock().unwrap();
 
@@ -156,15 +190,114 @@ fn add_topping(app_handle: AppHandle, nombre: &str, costo: i32) -> Result<(), St
     }
 }
 
+#[tauri::command]
+fn get_products(app_handle: AppHandle) -> Result<Vec<Product>, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().unwrap();
+
+    if let Some(conn) = &*conn {
+        let mut stmt = conn.prepare("SELECT id_producto, nombre_producto, id_categoria, precio_producto FROM Productos")
+            .map_err(|e| e.to_string())?;
+
+        let products_iter = stmt.query_map(NO_PARAMS, |row| {
+            Ok(Product {
+                id_producto: row.get(0)?,
+                nombre_producto: row.get(1)?,
+                id_categoria: row.get(2)?,
+                precio_producto: row.get(3)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+        // Recolecta los resultados en un Vec<Product>
+        let products: Vec<Product> = products_iter.map(|row| row.unwrap()).collect(); // Maneja el error aquí
+        Ok(products)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+
+#[tauri::command]
+fn get_categories(app_handle: AppHandle) -> Result<Vec<Category>, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().unwrap();
+
+    if let Some(conn) = &*conn {
+        let mut stmt = conn
+            .prepare("SELECT id_categoria, nombre_categoria FROM Categoria")
+            .map_err(|e| e.to_string())?;
+
+        let categories = stmt
+            .query_map(NO_PARAMS, |row| {
+                Ok(Category {
+                    id_categoria: row.get(0)?,
+                    nombre_categoria: row.get(1)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<Category>, _>>()
+            .map_err(|e| e.to_string())?;
+
+        Ok(categories)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+
+#[tauri::command]
+fn get_toppings(app_handle: AppHandle) -> Result<Vec<Topping>, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().unwrap();
+
+    if let Some(conn) = &*conn {
+        let mut stmt = conn
+            .prepare("SELECT id_agregado, nombre_agregado, costo_agregado FROM Agregados")
+            .map_err(|e| e.to_string())?;
+
+        let toppings = stmt
+            .query_map(NO_PARAMS, |row| {
+                Ok(Topping {
+                    id_agregado: row.get(0)?,
+                    nombre_agregado: row.get(1)?,
+                    costo_agregado: row.get(2)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<Topping>, _>>()
+            .map_err(|e| e.to_string())?;
+
+        Ok(toppings)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
 
 fn main() {
     tauri::Builder::default()
-        .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![add_category, add_product, add_client, add_topping])
+        .manage(AppState {
+            db: Default::default(),
+        })
+        .invoke_handler(tauri::generate_handler![
+            add_category,
+            add_product,
+            add_client,
+            add_topping,
+            get_products,
+            get_categories,
+            get_toppings
+        ])
         .setup(|app| {
             let handle = app.handle();
             let db = initialize_database(&handle).expect("Database initialize should succeed");
             create_database_schema(&db).expect("Database schema creation should succeed");
+            {
+                let state = handle.state::<AppState>();
+                let mut state_db = state.db.lock().unwrap();
+                *state_db = Some(db);
+            }
             Ok(())
         })
         .run(tauri::generate_context!())
