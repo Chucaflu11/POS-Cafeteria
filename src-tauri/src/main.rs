@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
-use rusqlite::{params, Connection, named_params};
-use tauri::{AppHandle, State, Manager};
+use rusqlite::{params, Connection};
+use tauri::{AppHandle, Manager};
 
 pub struct AppState {
   pub db: std::sync::Mutex<Option<Connection>>,
@@ -122,11 +122,45 @@ fn add_product(app_handle: AppHandle, nombre: &str, id_categoria: i32, precio: i
     }
 }
 
+#[tauri::command]
+fn add_client(app_handle: AppHandle, nombre: &str) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().unwrap();
+
+    if let Some(conn) = &mut *conn {
+        conn.execute(
+            "INSERT INTO Clientes_Fiados (nombre_cliente) VALUES (?)",
+            params![nombre],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn add_topping(app_handle: AppHandle, nombre: &str, costo: i32) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().unwrap();
+
+    if let Some(conn) = &mut *conn {
+        conn.execute(
+            "INSERT INTO Agregados (nombre_agregado, costo_agregado) VALUES (?, ?)",
+            params![nombre, costo],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
 
 fn main() {
     tauri::Builder::default()
         .manage(AppState { db: Default::default() })
-        .invoke_handler(tauri::generate_handler![add_category, add_product])
+        .invoke_handler(tauri::generate_handler![add_category, add_product, add_client, add_topping])
         .setup(|app| {
             let handle = app.handle();
             let db = initialize_database(&handle).expect("Database initialize should succeed");
