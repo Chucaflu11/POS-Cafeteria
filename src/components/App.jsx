@@ -43,7 +43,7 @@ function App() {
       <Header />
       <div className="main-content">
         <div className="content">
-          <Sidebar cart={cart} />
+          <Sidebar cart={cart} setCart={setCart} />
           <div className="content-right">
             <div className="main-buttons">
               {selectedCategory && (

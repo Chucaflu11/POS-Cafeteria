@@ -8,11 +8,14 @@ function PaymentModal({ cart, setCart, closePayment }) {
   const [cashPaid, setCashPaid] = useState('');
   const [changeDue, setChangeDue] = useState(0);
 
+  const [error, setError] = useState('');
+
   const total = cart.reduce((acc, item) => acc + item.precio_producto, 0);
 
   const handlePaymentMethodChange = (event) => {
     setPaymentMethod(event.target.value);
-    setCashPaid(''); // Limpiar el campo de efectivo si se cambia a tarjeta
+    setCashPaid('');
+    setError('');
     setChangeDue(0);
   };
 
@@ -28,19 +31,24 @@ function PaymentModal({ cart, setCart, closePayment }) {
     };
 
   const handleCompleteTransaction = async () => {
-    try {
-      await invoke('add_check', { cart, paymentMethod });
-      setCart([]); // Vaciar el carrito
-      closePayment(); // Cerrar el modal
-    } catch (error) {
-      console.error('Error al registrar la boleta:', error);
+    if(cart.length > 0) {
+      try {
+        await invoke('add_check', { cart, paymentMethod });
+        setCart([]); // Vaciar el carrito
+        closePayment(); // Cerrar el modal
+      } catch (error) {
+        setError('Error al completar la transacción');
+      }
+    }
+    else{
+      setError('El carrito está vacío');
     }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="close-button" onClick={closePayment}>X</button>
+        <button className="close-payment-button" onClick={closePayment}>X</button>
         <h2>Pago</h2>
         <div style={{marginBottom:"10px"}}>
           <label htmlFor="paymentMethod">Método de pago: </label>
@@ -53,10 +61,11 @@ function PaymentModal({ cart, setCart, closePayment }) {
           <div>
             <label htmlFor="cashPaid">Efectivo recibido:</label>
             <input type="number" id="cashPaid" value={cashPaid} onChange={handleCashPaidChange} />
-            <p>Vuelto: {changeDue}</p>
+            <p>Vuelto: {changeDue.toLocaleString()}</p>
           </div>
         )}
-        <button className='send-button' onClick={handleCompleteTransaction}>Finalizar transacción</button>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button className='send-payment-button' onClick={handleCompleteTransaction}>Finalizar transacción</button>
       </div>
     </div>
   );

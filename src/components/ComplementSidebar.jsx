@@ -69,10 +69,7 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
         <button>Botón 11</button>
         <button>Botón 12</button>
         <button onClick={getChecks}>Debug (console.log)</button>
-        <button onClick={openPayment} style={{backgroundColor:"#6d2d21"}}>Pagar</button>
-        {isPaymentOpen && (
-          <PaymentModal cart={cart} setCart={setCart} closePayment={closePayment}  />
-          )}
+        <button>Botón 14</button>
       </div>
     </div>
   );
