@@ -45,3 +45,8 @@ Asegúrate de tener todas estas dependencias instaladas y configuradas correctam
 
     Esto creará un archivo `register_1.0.0_x64-setup.exe` en la carpeta `\src-tauri\target\release\bundle\nsis`.
     Este archivo corresponde al instalador. Para ejecutar la aplicación, se debe ejecutar este archivo, y seguir las instrucciones que aparecen en la pantalla.
+
+## Documentación
+
+* [Componentes de React](docs/componentes.md)
+* [Lógica de Rust](docs/main-rs.md)
