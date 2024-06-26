@@ -47,7 +47,6 @@ const ProductForm = ({ closeProdForm, categories }) => {
     const idCategoria = parseInt(categoryId, 10);
     const precio = parseInt(productPrice, 10);
 
-    console.log(productName, idCategoria, precio);
     invoke("add_product", { nombre: productName, idCategoria, precio });
     closeProdForm();
   };

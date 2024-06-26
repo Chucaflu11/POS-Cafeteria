@@ -7,7 +7,7 @@ function Sidebar({ cart }) {
   const total = cart.reduce((acc, item) => acc + item.precio_producto, 0);
 
   return (
-    <aside className="sidebar">
+    <div className="sidebar">
       <h2>Resumen de la boleta</h2>
       <ul>
         {Array.isArray(cart) && cart.map((item, index) => (
@@ -21,7 +21,7 @@ function Sidebar({ cart }) {
         <span>Total</span>
         <span>${total}</span>
       </div>
-    </aside>
+    </div>
   );
 }
 

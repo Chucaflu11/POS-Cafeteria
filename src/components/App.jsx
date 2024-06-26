@@ -28,7 +28,6 @@ function App() {
       if (categoriesData.length > 0) {
         setSelectedCategory(categoriesData[0]);
       }
-      console.log("Fetched");
     } catch (error) {
       console.error('Error al obtener datos de la base de datos:', error);
       // ... (manejo de errores, mostrar mensaje al usuario, etc.)

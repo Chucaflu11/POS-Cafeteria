@@ -3,6 +3,8 @@
 use rusqlite::{params, Connection, NO_PARAMS};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::collections::HashMap;
+use chrono::prelude::*;
 use tauri::{AppHandle, Manager};
 
 // Data Models
@@ -27,6 +29,24 @@ struct Topping {
     costo_agregado: i32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct BoletaConDetalles {
+    id_boleta: i32,
+    fecha: String,
+    metodo_pago: String,
+    total: i32,
+    detalles: Option<DetalleBoleta>, // Opcional porque puede no haber detalles (boleta vacía)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DetalleBoleta {
+    id_detalle_boleta: i32,
+    id_producto: i32,
+    cantidad: i32,
+    precio_unitario: i32,
+    id_agregado: Option<i32>, // Opcional porque el agregado puede ser nulo
+}
+
 pub struct AppState {
     pub db: std::sync::Mutex<Option<Connection>>,
 }
@@ -37,8 +57,9 @@ fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::E
         .app_data_dir()
         .expect("The app data directory should exist.");
     fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
-    let sqlite_path = app_dir.join("MyApp.sqlite");
+    let sqlite_path = app_dir.join("register.sqlite");
 
+    println!("Database path: {:?}", sqlite_path);
     let db = Connection::open(sqlite_path)?;
     println!("Database initialized");
     Ok(db)
@@ -84,7 +105,7 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
             id_cliente INTEGER,
             id_producto INTEGER,
             cantidad INTEGER,
-            fecha_venta INTEGER,
+            fecha_venta TEXT,
             monto_pendiente INTEGER,
             FOREIGN KEY (id_cliente) REFERENCES Clientes_Fiados(id_cliente),
             FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
@@ -92,7 +113,7 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
 
         CREATE TABLE IF NOT EXISTS Boletas (
             id_boleta INTEGER PRIMARY KEY,
-            fecha INTEGER,
+            fecha TEXT,
             metodo_pago TEXT,
             total INTEGER
         );
@@ -102,11 +123,10 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
             id_boleta INTEGER,
             id_producto INTEGER,
             cantidad INTEGER,
-            precio_unitario REAL, -- Cambiado a REAL para decimales
-            id_agregado INTEGER,
+            precio_unitario INTEGER,
+            id_agregado INTEGER REFERENCES Agregados(id_agregado),
             FOREIGN KEY (id_boleta) REFERENCES Boletas(id_boleta),
-            FOREIGN KEY (id_producto) REFERENCES Productos(id_producto),
-            FOREIGN KEY (id_agregado) REFERENCES Agregados(id_agregado)
+            FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
         );
         ",
     )?;
@@ -273,6 +293,109 @@ fn get_toppings(app_handle: AppHandle) -> Result<Vec<Topping>, String> {
     }
 }
 
+#[tauri::command]
+fn add_check(app_handle: AppHandle, cart: Vec<Product>, payment_method: &str) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        // Calcular el total de la compra
+        let total = calculate_total(&cart);
+
+        // Insertar la boleta
+        conn.execute(
+            "INSERT INTO Boletas (fecha, metodo_pago, total) VALUES (?, ?, ?)",
+            params![get_timestamp(), payment_method, total],
+        )
+        .map_err(|e| e.to_string())?;
+
+        let boleta_id = conn.last_insert_rowid();
+
+        let mut product_quantities = HashMap::new();
+        for product in &cart {
+            *product_quantities.entry(product.id_producto).or_insert(0) += 1;
+        }
+
+        for (product_id, quantity) in product_quantities {
+            let product = cart.iter().find(|p| p.id_producto == product_id).unwrap();
+            conn.execute(
+                "INSERT INTO Detalle_Boleta (id_boleta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)",
+                params![boleta_id, product_id, quantity, product.precio_producto],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_checks(app_handle: AppHandle) -> Result<Vec<BoletaConDetalles>, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        let mut stmt = conn.prepare(
+            "
+            SELECT 
+                Boletas.id_boleta, 
+                Boletas.fecha, 
+                Boletas.metodo_pago, 
+                Boletas.total,
+                Detalle_Boleta.id_detalle_boleta,
+                Detalle_Boleta.id_producto,
+                Detalle_Boleta.cantidad,
+                Detalle_Boleta.precio_unitario,
+                Detalle_Boleta.id_agregado
+            FROM Boletas
+            LEFT JOIN Detalle_Boleta ON Boletas.id_boleta = Detalle_Boleta.id_boleta
+            ORDER BY Boletas.id_boleta DESC;
+            ",
+        )
+        .map_err(|e| e.to_string())?;
+
+        let boletas_iter = stmt.query_map(NO_PARAMS, |row| {
+            Ok(BoletaConDetalles {
+                id_boleta: row.get(0)?,
+                fecha: row.get(1)?,
+                metodo_pago: row.get(2)?,
+                total: row.get(3)?,
+                detalles: if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(4)? {
+                    Some(DetalleBoleta {
+                        id_detalle_boleta,
+                        id_producto: row.get(5)?,
+                        cantidad: row.get(6)?,
+                        precio_unitario: row.get(7)?,
+                        id_agregado: row.get(8)?,
+                    })
+                } else {
+                    None
+                },
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+        let boletas = boletas_iter.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?;
+        Ok(boletas)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+
+
+fn calculate_total(cart: &[Product]) -> i32 {
+    cart.iter().map(|item| item.precio_producto).sum()
+}
+
+fn get_timestamp() -> String {
+    let now = Local::now();
+    now.format("%d/%m/%y %H:%M:%S").to_string() 
+}
+
+
 
 fn main() {
     tauri::Builder::default()
@@ -284,9 +407,11 @@ fn main() {
             add_product,
             add_client,
             add_topping,
+            add_check,
             get_products,
             get_categories,
-            get_toppings
+            get_toppings,
+            get_checks,
         ])
         .setup(|app| {
             let handle = app.handle();

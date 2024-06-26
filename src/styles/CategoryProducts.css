@@ -5,7 +5,7 @@
   }
   
   .category-products-list {
-    width: 100%;
+    width: 90%;
     display: grid;
     grid-gap: 10px;
     list-style: none;
