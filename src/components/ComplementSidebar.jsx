@@ -1,23 +1,33 @@
 import React, {useState} from 'react';
-import FormularioCategoria from './CategoryForm';
 import '../styles/ComplementSidebar.css';
 import CategoryForm from './CategoryForm';
+import ProductForm from './ProductForm';
 
-function ComplementSidebar({ cart, setCart, fetchData }) {
+function ComplementSidebar({ cart, setCart, fetchData, categories }) {
   const removeLastItem = () => {
     const newCart = [...cart];
     newCart.pop();
     setCart(newCart);
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCatFormOpen, setIsCatFormOpen] = useState(false);
+  const [isProdFormOpen, setIsProdFormOpen] = useState(false);
 
-  const openModal = () => {
-    setIsModalOpen(true);
+  const openCatForm = () => {
+    setIsCatFormOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const closeCatForm = () => {
+    setIsCatFormOpen(false);
+    fetchData();
+  };
+
+  const openProdForm = () => {
+    setIsProdFormOpen(true);
+  };
+
+  const closeProdForm = () => {
+    setIsProdFormOpen(false);
     fetchData();
   };
 
@@ -25,11 +35,14 @@ function ComplementSidebar({ cart, setCart, fetchData }) {
     <div className="ComplementSidebar">
       <div className="button-container">
         <button onClick={removeLastItem}>Remover último ítem</button>
-        <button onClick={openModal}>Agregar Categoría</button>
-        {isModalOpen && (
-          <CategoryForm closeModal={closeModal} />
+        <button onClick={openCatForm}>Agregar Categoría</button>
+        {isCatFormOpen && (
+          <CategoryForm closeCatForm={closeCatForm} />
         )}
-        <button>Botón 3</button>
+        <button onClick={openProdForm}>Agregar Producto</button>
+        {isProdFormOpen && (
+          <ProductForm closeProdForm={closeProdForm} categories={categories} />
+        )}
         <button>Botón 4</button>
         <button>Botón 5</button>
         <button>Botón 6</button>

@@ -4,7 +4,7 @@ import React from 'react';
 import '../styles/Sidebar.css';
 
 function Sidebar({ cart }) {
-  const total = cart.reduce((acc, item) => acc + item.price, 0);
+  const total = cart.reduce((acc, item) => acc + item.precio_producto, 0);
 
   return (
     <aside className="sidebar">
@@ -12,14 +12,14 @@ function Sidebar({ cart }) {
       <ul>
         {Array.isArray(cart) && cart.map((item, index) => (
           <li key={index}>
-            <span>{item.name}</span>
-            <span>${item.price}</span>
+            <span>{item.nombre_producto}</span>
+            <span>${item.precio_producto}</span>
           </li>
         ))}
       </ul>
       <div className="total">
         <span>Total</span>
-        <span>${total.toFixed(2)}</span>
+        <span>${total}</span>
       </div>
     </aside>
   );

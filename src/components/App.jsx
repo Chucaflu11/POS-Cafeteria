@@ -62,6 +62,7 @@ function App() {
               setCart={setCart}
               setSelectedCategory={setSelectedCategory}
               fetchData={fetchData}
+              categories={categories}
             />
             <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
           </div>

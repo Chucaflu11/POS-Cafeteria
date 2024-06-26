@@ -34,9 +34,9 @@ function CategoryProducts({products, cart, setCart }) {
     <div className="category-products" ref={categoryProductsRef}>
       <ul className="category-products-list" style={{ gridTemplateColumns: `repeat(${gridColumnCount}, 1fr)` }}>
         {products.map((product) => (
-          <li key={product.id}>
+          <li key={product.id_producto}>
             <button onClick={() => addToCart(product)}>
-              {product.name}
+              {product.nombre_producto}
             </button>
           </li>
         ))}

@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import '../styles/CategoryForm.css';
 
 
-const CategoryForm = ({ closeModal }) => {
+const CategoryForm = ({ closeCatForm }) => {
   const [categoryName, setCategoryName] = useState('');
   const [error, setError] = useState('');
   
@@ -21,13 +21,13 @@ const CategoryForm = ({ closeModal }) => {
     }
 
     invoke("add_category", { nombre: categoryName });
-    closeModal();
+    closeCatForm();
   };
 
     return (
       <div className="modal-overlay">
         <div className="modal-content">
-          <button className="close-button" onClick={closeModal}>X</button>
+          <button className="close-button" onClick={closeCatForm}>X</button>
           <h2>Categoría</h2>
           <form>
             <div>
