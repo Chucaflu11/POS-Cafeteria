@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import CategoryProducts from './CategoryProducts';
 import ComplementSidebar from './ComplementSidebar';
+
+import Dashboard from './Dashboard/Dashboard';
 
 import { invoke } from '@tauri-apps/api/tauri';
 
@@ -39,35 +42,42 @@ function App() {
   }, []);
 
   return (
-    <div className="app">
-      <Header />
-      <div className="main-content">
-        <div className="content">
-          <Sidebar cart={cart} setCart={setCart} />
-          <div className="content-right">
-            <div className="main-buttons">
-              {selectedCategory && (
-                <CategoryProducts
-                  products={products.filter(
-                    (product) => product.id_categoria === selectedCategory.id_categoria
-                  )}
-                  cart={cart}
-                  setCart={setCart}
-                />
-              )}
+    <Router>
+      <div className="app">
+        <Header />
+        <Routes>
+          <Route path="/" element={
+            <div className="main-content">
+              <div className="content">
+                <Sidebar cart={cart} setCart={setCart} />
+                <div className="content-right">
+                  <div className="main-buttons">
+                    {selectedCategory && (
+                      <CategoryProducts
+                        products={products.filter(
+                          (product) => product.id_categoria === selectedCategory.id_categoria
+                        )}
+                        cart={cart}
+                        setCart={setCart}
+                      />
+                    )}
+                  </div>
+                  <ComplementSidebar
+                    cart={cart}
+                    setCart={setCart}
+                    setSelectedCategory={setSelectedCategory}
+                    fetchData={fetchData}
+                    categories={categories}
+                  />
+                  <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
+                </div>
+              </div>
             </div>
-            <ComplementSidebar
-              cart={cart}
-              setCart={setCart}
-              setSelectedCategory={setSelectedCategory}
-              fetchData={fetchData}
-              categories={categories}
-            />
-            <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
-          </div>
-        </div>
+          }/>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
       </div>
-    </div>
+    </Router>
   );
 }
 

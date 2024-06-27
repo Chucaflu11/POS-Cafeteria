@@ -2,7 +2,6 @@ import React, {useState} from 'react';
 import '../styles/ComplementSidebar.css';
 import CategoryForm from './CategoryForm';
 import ProductForm from './ProductForm';
-import PaymentModal from './PaymentModal';
 import { invoke } from '@tauri-apps/api';
 
 function ComplementSidebar({ cart, setCart, fetchData, categories }) {
@@ -19,7 +18,6 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
 
   const [isCatFormOpen, setIsCatFormOpen] = useState(false);
   const [isProdFormOpen, setIsProdFormOpen] = useState(false);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const openCatForm = () => {
     setIsCatFormOpen(true);
@@ -37,14 +35,6 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
   const closeProdForm = () => {
     setIsProdFormOpen(false);
     fetchData();
-  };
-
-  const openPayment = () => {
-    setIsPaymentOpen(true);
-  };
-
-  const closePayment = () => {
-    setIsPaymentOpen(false);
   };
 
   return (
