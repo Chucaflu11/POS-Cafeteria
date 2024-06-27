@@ -13,7 +13,6 @@ function Dashboard() {
     const getChecks = async (page, pageSize) => {
         const fetchedChecks = await invoke('get_checks', { page, pageSize });
         setChecks(fetchedChecks);
-        console.log(fetchedChecks);
         setIsLastPage(fetchedChecks.length === 0); 
     };
 

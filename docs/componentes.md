@@ -17,7 +17,7 @@ Este documento describe los componentes principales utilizados en el frontend de
 
 ### **Descripción:**
 
-El componente `App` es el componente principal de la aplicación y se encarga de manejar el estado global, incluyendo las categorías, productos, la categoría seleccionada y el carrito de compras. También gestiona la carga de datos desde la base de datos a través de funciones Tauri y renderiza los demás componentes de la vista principal de la aplicación (Header, Sidebar, Footer, CategoryProducts, ComplementSidebar).
+El componente `App` es el componente principal de la aplicación y se encarga de manejar el estado global, incluyendo las categorías, productos, la categoría seleccionada y el carrito de compras. También gestiona la carga de datos desde la base de datos a través de funciones Tauri y renderiza los demás componentes de la vista principal de la aplicación (Header, Sidebar, Footer, CategoryProducts, ComplementSidebar), utiliza React Router para gestionar la navegación entre las diferentes vistas de la aplicación..
 
 ### **Props:**
 
@@ -36,6 +36,11 @@ Este componente no recibe props externas.
 * **setSelectedCategory():** Función para actualizar la categoría seleccionada.
 * **setCart():** Función para actualizar el contenido del carrito.
 
+### **Rutas(react-router):**
+
+* **`/`:** Muestra la vista principal de la aplicación con la barra lateral, productos, complementos y pie de página.
+* **`/dashboard`:** Muestra el componente `Dashboard`.
+
 ### **Ejemplo de uso:**
 
 Dado que este es el componente principal, no se "usa" dentro de otros componentes, sino que es el punto de entrada de toda la aplicación.
@@ -44,7 +49,7 @@ Dado que este es el componente principal, no se "usa" dentro de otros componente
 
 ### **Descripción:**
 
-El componente `Header` representa la cabecera de la aplicación. Muestra el logotipo de la cafetería y el título "Cafetería Del Ángel".
+El componente `Header` representa la cabecera de la aplicación. Muestra el logotipo de la cafetería, el título "Cafetería Del Ángel" y un botón que permite navegar entre la vista principal (`/`) y la vista del dashboard (`/dashboard`).
 
 ### **Props:**
 
@@ -52,11 +57,11 @@ Este componente no recibe props externas.
 
 ### **Estado:**
 
-Este componente no maneja estado interno.
+* **currentRoute:** Almacena la ruta actual (`/` o `/dashboard`) para determinar el estado del botón de navegación.
 
 ### **Funciones:**
 
-Este componente no define funciones personalizadas.
+* **handleClick():** Función que maneja el clic en el botón de navegación. Actualiza el estado `currentRoute` y redirige a la siguiente ruta utilizando navigate de React Router.
 
 ### **Ejemplo de uso:**
 
@@ -68,24 +73,27 @@ Este componente no define funciones personalizadas.
 
 ### **Descripción:**
 
-El componente `Sidebar` muestra un resumen de la boleta del cliente en la barra lateral. Lista los productos que el cliente ha agregado al carrito, junto con sus precios individuales y el precio total.
+El componente `Sidebar` muestra un resumen de la boleta del cliente en la barra lateral, incluyendo los productos agregados al carrito, sus precios individuales y el precio total. Además, incluye un botón "Pagar" que, al hacer clic, abre un modal para procesar el pago.
 
 ### **Props:**
 
 * **cart:** Un array que contiene los productos agregados al carrito. Cada producto debe ser un objeto con las propiedades `nombre_producto` y `precio_producto`.
 
+* **setCart:** Una función para actualizar el contenido del carrito después de procesar el pago.
+
 ### **Estado:**
 
-Este componente no maneja estado interno.
+* **isPaymentOpen:** Un booleano que indica si el modal de pago está abierto.
 
 ### **Funciones:**
 
-Este componente no define funciones personalizadas.
+* **openPayment():** Abre el modal de pago.
+* **closePayment():** Cierra el modal de pago.
 
 ### **Ejemplo de uso:**
 
 ```JavaScript
-    <Sidebar cart={[{ nombre_producto: "Café", precio_producto: 2000 }, { nombre_producto: "Sandwich", precio_producto: 4500 }]} />
+    <Sidebar cart={[{ nombre_producto: "Café", precio_producto: 2000 }, { nombre_producto: "Sandwich", precio_producto: 4500 }]} setCart={setCart} />
 ```
 
 ## Componente CategoryProducts
@@ -254,5 +262,80 @@ El componente `Footer` muestra una lista de botones, cada uno representando una 
     <Footer 
     setSelectedCategory={setSelectedCategory} 
     categories={[{ id_categoria: 1, nombre_categoria: "Bebidas" }, { id_categoria: 2, nombre_categoria: "Comidas" }]} 
+    />
+```
+
+## Component Dashboard
+
+### **Descripción:**
+
+El componente `Dashboard` muestra un listado de boletas de la cafetería obtenidas de la base de datos. Estas boletas se muestran en tarjetas ordenadas por su ID de manera descendente, permitiendo la paginación para navegar entre ellas. Además, incluye un botón para recargar las boletas desde la base de datos.
+
+### **Props:**
+
+Este componente no recibe props externas.
+
+### **Estado:**
+
+* **checks:** Un array que contiene los datos de las boletas obtenidas de la base de datos.
+* **page:** Un número que representa la página actual de la paginación.
+* **pageSize:** Un número que representa la cantidad de boletas por página.
+* **isLastPage:** Un booleano que indica si se ha llegado a la última página de la paginación.
+
+### **Funciones:**
+
+* **getChecks(page, pageSize):** Una función asíncrona que obtiene las boletas de la base de datos a través del comando Tauri `get_checks`, pasando la página y el tamaño de página como argumentos.
+* **handlePageChange(newPage):** Una función que se encarga de cambiar la página actual, actualizando el estado `page` si no se ha llegado a la última página o si se está navegando a una página anterior.
+
+### **Ejemplo de uso:**
+
+El componente `Dashboard` se utiliza como una ruta en el componente principal `App`:
+
+```JavaScript
+    <Route path="/dashboard" element={<Dashboard />} />
+```
+
+## Component ChecksCard
+
+### **Descripción:**
+
+El componente `ChecksCards` muestra visualmente una lista de boletas (`checks`) en formato de tarjetas. Cada tarjeta presenta la información básica de una boleta (ID, fecha, método de pago y total) y los detalles de los productos que la componen, incluyendo el nombre, la cantidad y el precio unitario.
+
+### **Props:**
+
+* **checks:** Un array de objetos que representan las boletas. Cada boleta debe ser un objeto con las siguientes propiedades:
+  * **id_boleta (número):** El identificador único de la boleta.
+  * **fecha (string):** La fecha de la boleta en formato "yy/mm/dd HH:MM:SS".
+  * **metodo_pago (string):** El método de pago utilizado (por ejemplo, "Efectivo", "Tarjeta").
+  * **total (número):** El monto total de la boleta.
+  * **detalles (array):** Un array de objetos que representan los detalles de la boleta, cada uno con las siguientes propiedades:
+    * **nombre_producto (string):** El nombre del producto.
+    * **cantidad (número):** La cantidad del producto en la boleta.
+    * **precio_unitario (número):** El precio unitario del producto.
+
+### **Estado:**
+
+Este componente no maneja estado interno.
+
+### **Funciones:**
+
+Este componente no define funciones personalizadas.
+
+### **Ejemplo de uso:**
+
+```JavaScript
+    <ChecksCards 
+        checks={[
+            { 
+                id_boleta: 1, 
+                fecha: "24/06/27 15:08:00", 
+                metodo_pago: "Efectivo", 
+                total: 6500, 
+                detalles: [
+                    { nombre_producto: "Café", cantidad: 1, precio_unitario: 2000 }, 
+                    { nombre_producto: "Sándwich", cantidad: 1, precio_unitario: 4500 }
+                ]
+            }
+        ]}
     />
 ```
