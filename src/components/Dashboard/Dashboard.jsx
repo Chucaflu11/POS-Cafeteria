@@ -1,40 +1,47 @@
 import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api';
 
-function Dashboard() {
-    // Step 2: Initialize state for storing checks data
-    const [checks, setChecks] = useState([]);
+import '../../styles/Dashboard/Dashboard.css';
+import ChecksCard from './ChecksCard';
 
-    // Step 3: Update getChecks to fetch and store checks data
-    const getChecks = async () => {
-        const fetchedChecks = await invoke('get_checks');
-        setChecks(fetchedChecks); // Assuming fetchedChecks is an array
+function Dashboard() {
+    const [checks, setChecks] = useState([]);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+    const [isLastPage, setIsLastPage] = useState(false);
+
+    const getChecks = async (page, pageSize) => {
+        const fetchedChecks = await invoke('get_checks', { page, pageSize });
+        setChecks(fetchedChecks);
+        console.log(fetchedChecks);
+        setIsLastPage(fetchedChecks.length === 0); 
     };
 
+    React.useEffect(() => {
+        getChecks(page, pageSize);
+    }, [page, pageSize]);
+
+    const handlePageChange = (newPage) => {
+        if (!isLastPage || newPage < page) {
+            setPage(newPage);
+        }
+    };
+
+    const sortedChecks = [...checks].sort((a, b) => Number(b.id_boleta) - Number(a.id_boleta));
+
     return (
-        <div>
-            <h1>Dashboard</h1>
-            <button onClick={getChecks}>Load Checks</button>
-            {/* Step 4: Render Checks */}
+        <div className='dashboard-content'>
+            <div className='title-dashboard'>
+                <h1>Boletas</h1>
+                <button className='refresh-button' onClick={() => getChecks(page, pageSize)}> Recargar Boletas </button>
+            </div>
             <div>
-                {checks.map((check, index) => {
-                return (
-                    <div key={index}>
-                        <h2>Check ID: {check.id_boleta}</h2>
-                        <p>Fecha: {check.fecha}</p>
-                        <p>Método de Pago: {check.metodo_pago}</p>
-                        <p>Total: {check.total}</p>
-                        <h3>Detalles:</h3>
-                        {check.detalles ? (
-                            <div>
-                                <p>Producto ID: {check.detalles.id_producto}</p>
-                                <p>Cantidad: {check.detalles.cantidad}</p>
-                                <p>Precio Unitario: {check.detalles.precio_unitario}</p>
-                            </div>
-                        ) : <p>No details available</p>}
-                    </div>
-                );
-            })}
+                <ChecksCard checks={sortedChecks} />
+                <div className="pagination-controls">
+                    <button onClick={() => handlePageChange(page - 1)} disabled={page === 1}> &larr; </button>
+                    <span> {page} </span>
+                    <button onClick={() => handlePageChange(page + 1)} disabled={isLastPage}> &rarr; </button>
+                </div>
             </div>
         </div>
     );

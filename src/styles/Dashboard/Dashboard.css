@@ -1,0 +1,49 @@
+.title-dashboard {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.title-dashboard h1 {
+    color: black;
+    font-size: 3em;
+    margin: 0.5rem 0 0 1rem;
+
+}
+
+.refresh-button {
+    margin: 0.5rem 1rem 0 0;
+    color: white;
+    background-color: #A63E26;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 10px;
+    height: 4rem;
+    width: 4rem;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pagination-controls span {
+    font-size: 1.2rem;
+    margin: 1rem;
+}
+
+.pagination-controls button {
+    color: white;
+    background-color: #A63E26;
+    border: none;
+    text-align: center;
+    border-radius: 1rem;
+    cursor: pointer;
+    height: 2rem;
+    width: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}

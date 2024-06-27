@@ -34,8 +34,8 @@ function PaymentModal({ cart, setCart, closePayment }) {
     if(cart.length > 0) {
       try {
         await invoke('add_check', { cart, paymentMethod });
-        setCart([]); // Vaciar el carrito
-        closePayment(); // Cerrar el modal
+        setCart([]);
+        closePayment();
       } catch (error) {
         setError('Error al completar la transacción');
       }

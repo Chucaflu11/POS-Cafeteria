@@ -27,7 +27,6 @@ function App() {
       const productsData = await invoke('get_products');
       setProducts(productsData);
 
-      // Establecer la primera categoría como seleccionada si hay datos
       if (categoriesData.length > 0) {
         setSelectedCategory(categoriesData[0]);
       }

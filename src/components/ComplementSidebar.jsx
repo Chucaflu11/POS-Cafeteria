@@ -11,11 +11,6 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
     setCart(newCart);
   };
 
-  const getChecks = () => {
-    const checks = invoke('get_checks');
-    console.log(checks);
-  };
-
   const [isCatFormOpen, setIsCatFormOpen] = useState(false);
   const [isProdFormOpen, setIsProdFormOpen] = useState(false);
 
@@ -58,7 +53,7 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
         <button>Botón 10</button>
         <button>Botón 11</button>
         <button>Botón 12</button>
-        <button onClick={getChecks}>Debug (console.log)</button>
+        <button>Botón 13</button>
         <button>Botón 14</button>
       </div>
     </div>

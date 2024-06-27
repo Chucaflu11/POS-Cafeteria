@@ -29,22 +29,25 @@ struct Topping {
     costo_agregado: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct BoletaConDetalles {
     id_boleta: i32,
     fecha: String,
     metodo_pago: String,
     total: i32,
-    detalles: Option<DetalleBoleta>, // Opcional porque puede no haber detalles (boleta vacía)
+    detalles: Vec<DetalleBoleta>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct DetalleBoleta {
     id_detalle_boleta: i32,
     id_producto: i32,
+    nombre_producto: String,
     cantidad: i32,
     precio_unitario: i32,
-    id_agregado: Option<i32>, // Opcional porque el agregado puede ser nulo
+    id_agregado: Option<i32>,
+    nombre_agregado: Option<String>,
+    costo_agregado: Option<i32>,
 }
 
 pub struct AppState {
@@ -332,58 +335,81 @@ fn add_check(app_handle: AppHandle, cart: Vec<Product>, payment_method: &str) ->
 }
 
 #[tauri::command]
-fn get_checks(app_handle: AppHandle) -> Result<Vec<BoletaConDetalles>, String> {
+fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<BoletaConDetalles>, String> {
     let state = app_handle.state::<AppState>();
     let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &*conn {
-        let mut stmt = conn.prepare(
-            "
+        let offset = (page - 1) * page_size;
+        let query = "
             SELECT 
-                Boletas.id_boleta, 
-                Boletas.fecha, 
-                Boletas.metodo_pago, 
-                Boletas.total,
-                Detalle_Boleta.id_detalle_boleta,
-                Detalle_Boleta.id_producto,
-                Detalle_Boleta.cantidad,
-                Detalle_Boleta.precio_unitario,
-                Detalle_Boleta.id_agregado
-            FROM Boletas
-            LEFT JOIN Detalle_Boleta ON Boletas.id_boleta = Detalle_Boleta.id_boleta
-            ORDER BY Boletas.id_boleta DESC;
-            ",
-        )
-        .map_err(|e| e.to_string())?;
+                B.id_boleta, 
+                B.fecha, 
+                B.metodo_pago, 
+                B.total,
+                DB.id_detalle_boleta,
+                DB.id_producto,
+                P.nombre_producto,
+                DB.cantidad,
+                DB.precio_unitario,
+                DB.id_agregado,
+                A.nombre_agregado,
+                A.costo_agregado
+            FROM (
+                SELECT *
+                FROM Boletas
+                ORDER BY id_boleta DESC
+                LIMIT ? OFFSET ?
+            ) AS B
+            LEFT JOIN Detalle_Boleta AS DB ON B.id_boleta = DB.id_boleta
+            LEFT JOIN Productos AS P ON DB.id_producto = P.id_producto
+            LEFT JOIN Agregados AS A ON DB.id_agregado = A.id_agregado;
+        ";
 
-        let boletas_iter = stmt.query_map(NO_PARAMS, |row| {
-            Ok(BoletaConDetalles {
-                id_boleta: row.get(0)?,
-                fecha: row.get(1)?,
-                metodo_pago: row.get(2)?,
-                total: row.get(3)?,
-                detalles: if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(4)? {
-                    Some(DetalleBoleta {
-                        id_detalle_boleta,
-                        id_producto: row.get(5)?,
-                        cantidad: row.get(6)?,
-                        precio_unitario: row.get(7)?,
-                        id_agregado: row.get(8)?,
-                    })
-                } else {
-                    None
-                },
-            })
+        let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+
+        let mut boletas_map: std::collections::HashMap<i32, BoletaConDetalles> = std::collections::HashMap::new();
+        
+        let boletas_iter = stmt.query_map([page_size, offset], |row| {
+            let id_boleta: i32 = row.get(0)?;
+            let boleta = boletas_map.entry(id_boleta).or_insert_with(|| BoletaConDetalles {
+                id_boleta,
+                fecha: row.get(1).expect("fecha"),
+                metodo_pago: row.get(2).expect("metodo_pago"),
+                total: row.get(3).expect("total"),
+                detalles: Vec::new(),
+            });
+
+            if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(4)? {
+                boleta.detalles.push(DetalleBoleta {
+                    id_detalle_boleta,
+                    id_producto: row.get(5)?,
+                    nombre_producto: row.get(6)?,
+                    cantidad: row.get(7)?,
+                    precio_unitario: row.get(8)?,
+                    id_agregado: row.get(9)?,
+                    nombre_agregado: row.get(10)?,
+                    costo_agregado: row.get(11)?,
+                });
+            }
+
+            Ok(())
         })
         .map_err(|e| e.to_string())?;
 
-        let boletas = boletas_iter.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?;
+        // Collect the results into a vector of BoletaConDetalles
+        for result in boletas_iter {
+            result.map_err(|e| e.to_string())?;
+        }
+
+        let boletas: Vec<BoletaConDetalles> = boletas_map.into_iter().map(|(_, boleta)| boleta).collect();
+        
+        
         Ok(boletas)
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
-
 
 
 fn calculate_total(cart: &[Product]) -> i32 {

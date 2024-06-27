@@ -1,0 +1,38 @@
+.cards {
+    display: flex;
+    flex-direction: row;
+}
+
+.cards h3 {
+    margin-top: 1rem;
+}
+
+.no-details {
+    border-top: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.check-card {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+    padding: 1rem;
+    margin: 1rem;
+    width: 200px;
+    height: 400px;
+    overflow: scroll;
+}
+
+.check-card::-webkit-scrollbar {
+    display: none;
+}
+
+.card-details {
+    margin-bottom: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.check-card:hover{
+    background-color: #F2F2F2;
+}
