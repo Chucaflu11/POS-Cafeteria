@@ -32,10 +32,11 @@
     right: 10px;
     background: none;
     border: none;
-    font-size: 10px;
+    border-radius: 3vh !important;
+    font-size: 1rem;
     cursor: pointer;
-    height: 20px !important;
-    width: 20px !important;
+    height: 3vh !important;
+    width: 3vh !important;
 }
 
 .send-button {
@@ -43,7 +44,7 @@
     border: none;
     font-size: 10px;
     cursor: pointer;
-    height: 30px !important;
-    width: 60px !important;
+    height: 4vh !important;
+    width: 6vw !important;
     margin-top: 10px;
 }

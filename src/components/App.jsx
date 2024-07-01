@@ -50,16 +50,19 @@ function App() {
               <div className="content">
                 <Sidebar cart={cart} setCart={setCart} />
                 <div className="content-right">
-                  <div className="main-buttons">
-                    {selectedCategory && (
-                      <CategoryProducts
-                        products={products.filter(
-                          (product) => product.id_categoria === selectedCategory.id_categoria
-                        )}
-                        cart={cart}
-                        setCart={setCart}
-                      />
-                    )}
+                  <div className="products-menu">
+                    <div className="main-buttons">
+                      {selectedCategory && (
+                        <CategoryProducts
+                          products={products.filter(
+                            (product) => product.id_categoria === selectedCategory.id_categoria
+                          )}
+                          cart={cart}
+                          setCart={setCart}
+                        />
+                      )}
+                    </div>
+                    <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
                   </div>
                   <ComplementSidebar
                     cart={cart}
@@ -68,7 +71,6 @@ function App() {
                     fetchData={fetchData}
                     categories={categories}
                   />
-                  <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
                 </div>
               </div>
             </div>

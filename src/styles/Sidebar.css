@@ -1,5 +1,5 @@
 .sidebar {
-    width: 300px;
+    width: 15rem;
     height: 100%;
     background-color: #F2F2F2;
     float: left;
@@ -21,7 +21,12 @@
     list-style-type: none;
     padding-top: 1rem;
     margin: 0;
-    width: 100%;
+    overflow-y: auto;
+    height: calc(100vh - 250px);
+}
+
+.sidebar ul::-webkit-scrollbar {
+    display: none;
 }
 
 .sidebar li {
@@ -34,7 +39,6 @@
 .sidebar .total {
     border-top: 1px solid black;
     display: flex;
-    width: 90%;
     justify-content: space-between;
     padding: 0 1rem 0 1rem;
     font-weight: bold;
@@ -48,12 +52,12 @@
     width: 90%;
     background-color: #A63E26;
     color: white;
-    padding: 14px 20px;
-    margin: 10px ;
+    padding: 0.875rem 1.25rem;
+    margin: 0.625rem;
     border: none;
     cursor: pointer;
-    border-radius: 4px;
-    font-size: 16px;
+    border-radius: 0.25rem;
+    font-size: 1rem;
     font-weight: bold;
 }
 

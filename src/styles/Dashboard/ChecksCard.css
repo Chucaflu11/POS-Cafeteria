@@ -1,6 +1,7 @@
 .cards {
     display: flex;
     flex-direction: row;
+    height: 70vh;
 }
 
 .cards h3 {
@@ -19,8 +20,8 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
     padding: 1rem;
     margin: 1rem;
-    width: 200px;
-    height: 400px;
+    width: 20%;
+    height: 80%;
     overflow: scroll;
 }
 

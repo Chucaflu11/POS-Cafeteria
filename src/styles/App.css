@@ -1,8 +1,7 @@
 .app {
-    height: 720px;
-    width: 1280px;
     display: flex;
     flex-direction: column;
+    height: 100vh;
 }
 
 .content {
@@ -12,18 +11,23 @@
 
 .main-content {
     display: flex;
-    height: 100vh;
+    flex-grow: 1;
 }
 
 .content-right {
     display: flex;
     flex-grow: 1;
-    flex-direction: column;
-    margin-right: 100px;
+    flex-direction: row;
 }
 
 .main-buttons {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
+}
+
+.products-menu {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
 }

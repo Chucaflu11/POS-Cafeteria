@@ -9,7 +9,7 @@
   
   .footer-button-container {
     display: grid;
-    grid-gap: 10px;
+    grid-gap: 0.625rem;
     list-style: none;
     padding: 1rem;
   }
@@ -20,9 +20,9 @@
     border: none;
     font-size: 1rem;
     text-align: center;
-    height: 80px;
-    width: 100px;
-    border-radius: 10px;
+    height: 11vh;
+    width: 12.5vh;
+    border-radius: 0.625rem;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }

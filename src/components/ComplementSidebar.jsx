@@ -33,7 +33,7 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
   };
 
   return (
-    <div className="ComplementSidebar">
+    <div className="complement-sidebar">
       <div className="button-container">
         <button onClick={openCatForm}>Agregar Categoría</button>
         {isCatFormOpen && (

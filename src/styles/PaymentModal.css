@@ -30,12 +30,12 @@
     right: 10px;
     background: none;
     border: none;
-    border-radius: 10px;
+    border-radius: 2vh;
     font-size: 1rem;
     text-align: center;
     cursor: pointer;
-    height: 20px !important;
-    width: 20px !important;
+    height: 3vh !important;
+    width: 3vh !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -47,8 +47,8 @@
     border-radius: 10px;
     font-size: 1rem;
     cursor: pointer;
-    height: 40px !important;
-    width: 80px !important;
+    height: 5vh !important;
+    width: 5vw !important;
     margin-top: 10px;
 }
 
