@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { invoke } from '@tauri-apps/api';
+import React from 'react';
 
 import '../../styles/Dashboard/ChecksCard.css';
 

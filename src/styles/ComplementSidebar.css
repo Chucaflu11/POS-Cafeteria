@@ -6,7 +6,7 @@
     height: 100%;
     clear: both;
     z-index: 10;
-  }
+}
 
 .complement-sidebar .button-container {
     display: grid;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
@@ -32,7 +32,6 @@ function App() {
       }
     } catch (error) {
       console.error('Error al obtener datos de la base de datos:', error);
-      // ... (manejo de errores, mostrar mensaje al usuario, etc.)
     }
   }
 
@@ -74,7 +73,7 @@ function App() {
                 </div>
               </div>
             </div>
-          }/>
+          } />
           <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </div>

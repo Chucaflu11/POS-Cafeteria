@@ -10,10 +10,11 @@
     align-items: center;
     z-index: 1000;
 }
- 
+
 .modal-overlay h2 {
     margin-bottom: 10px;
 }
+
 .modal-content {
     background: white;
     padding: 20px;
@@ -21,7 +22,7 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: relative;
 }
-  
+
 .close-payment-button {
     color: white;
     background-color: #A63E26 !important;
@@ -47,8 +48,8 @@
     border-radius: 10px;
     font-size: 1rem;
     cursor: pointer;
-    height: 5vh !important;
-    width: 5vw !important;
+    height: 6vh !important;
+    width: 7vw !important;
     margin-top: 10px;
 }
 

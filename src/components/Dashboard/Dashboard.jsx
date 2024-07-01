@@ -13,7 +13,7 @@ function Dashboard() {
     const getChecks = async (page, pageSize) => {
         const fetchedChecks = await invoke('get_checks', { page, pageSize });
         setChecks(fetchedChecks);
-        setIsLastPage(fetchedChecks.length === 0); 
+        setIsLastPage(fetchedChecks.length === 0);
     };
 
     React.useEffect(() => {

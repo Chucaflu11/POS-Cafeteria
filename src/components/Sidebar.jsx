@@ -18,7 +18,7 @@ function Sidebar({ cart, setCart }) {
   };
 
   return (
-    <div className="sidebar">
+    <div className='sidebar'>
       <div className='check' >
         <h2>Resumen de la boleta</h2>
         <ul>
@@ -29,15 +29,15 @@ function Sidebar({ cart, setCart }) {
             </li>
           ))}
         </ul>
-        <div className="total">
+        <div className='total'>
           <span>Total</span>
           <span>${total}</span>
         </div>
       </div>
-      <button className="pay-button" onClick={openPayment}>Pagar</button>
+      <button className='pay-button' onClick={openPayment}>Pagar</button>
       {isPaymentOpen && (
-          <PaymentModal cart={cart} setCart={setCart} closePayment={closePayment}  />
-          )}
+        <PaymentModal cart={cart} setCart={setCart} closePayment={closePayment} />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../styles/CategoryProducts.css';
 
-function CategoryProducts({products, cart, setCart }) {
+function CategoryProducts({ products, cart, setCart }) {
   const [gridColumnCount, setGridColumnCount] = useState(1);
   const categoryProductsRef = useRef(null);
 

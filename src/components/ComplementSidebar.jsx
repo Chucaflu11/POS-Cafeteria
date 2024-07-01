@@ -2,7 +2,6 @@ import React, {useState} from 'react';
 import '../styles/ComplementSidebar.css';
 import CategoryForm from './CategoryForm';
 import ProductForm from './ProductForm';
-import { invoke } from '@tauri-apps/api';
 
 function ComplementSidebar({ cart, setCart, fetchData, categories }) {
   const removeLastItem = () => {

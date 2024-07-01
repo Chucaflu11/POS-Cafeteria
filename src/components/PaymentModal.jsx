@@ -4,7 +4,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import '../styles/PaymentModal.css';
 
 function PaymentModal({ cart, setCart, closePayment }) {
-  const [paymentMethod, setPaymentMethod] = useState('efectivo'); 
+  const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cashPaid, setCashPaid] = useState('');
   const [changeDue, setChangeDue] = useState(0);
 
@@ -19,19 +19,28 @@ function PaymentModal({ cart, setCart, closePayment }) {
     setChangeDue(0);
   };
 
-    const handleCashPaidChange = (event) => {
-        const paid = parseFloat(event.target.value);
-        if (!isNaN(paid)) {
-            setCashPaid(event.target.value);
-            setChangeDue(Math.max(0, paid - total));
-        } else {
-            setCashPaid('');
-            setChangeDue(0); 
-        }
-    };
+  const handleCashPaidChange = (event) => {
+    const paid = parseFloat(event.target.value);
+    if (!isNaN(paid)) {
+      setCashPaid(event.target.value);
+      setChangeDue(Math.max(0, paid - total));
+    } else {
+      setCashPaid('');
+      setChangeDue(0);
+    }
+  };
 
   const handleCompleteTransaction = async () => {
-    if(cart.length > 0) {
+    if (cart.length > 0) {
+      const paidAmount = parseFloat(cashPaid);
+      if (paidAmount < 0) {
+        setError('El monto pagado no puede ser negativo');
+        return;
+      }
+      else if (isNaN(paidAmount)) {
+        setError('El monto pagado no es válido');
+        return;
+      }
       try {
         await invoke('add_check', { cart, paymentMethod });
         setCart([]);
@@ -40,7 +49,7 @@ function PaymentModal({ cart, setCart, closePayment }) {
         setError('Error al completar la transacción');
       }
     }
-    else{
+    else {
       setError('El carrito está vacío');
     }
   };
@@ -50,7 +59,7 @@ function PaymentModal({ cart, setCart, closePayment }) {
       <div className="modal-content">
         <button className="close-payment-button" onClick={closePayment}>X</button>
         <h2>Pago</h2>
-        <div style={{marginBottom:"10px"}}>
+        <div style={{ marginBottom: "10px" }}>
           <label htmlFor="paymentMethod">Método de pago: </label>
           <select id="paymentMethod" value={paymentMethod} onChange={handlePaymentMethodChange}>
             <option value="efectivo">Efectivo</option>
@@ -60,7 +69,7 @@ function PaymentModal({ cart, setCart, closePayment }) {
         {paymentMethod === 'efectivo' && (
           <div>
             <label htmlFor="cashPaid">Efectivo recibido:</label>
-            <input type="number" id="cashPaid" value={cashPaid} onChange={handleCashPaidChange} />
+            <input type="number" id="cashPaid" pattern="[0-9]*" value={cashPaid} onChange={handleCashPaidChange} />
             <p>Vuelto: {changeDue.toLocaleString()}</p>
           </div>
         )}
