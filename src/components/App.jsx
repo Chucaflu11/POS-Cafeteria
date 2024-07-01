@@ -13,11 +13,16 @@ import { invoke } from '@tauri-apps/api/tauri';
 import '../styles/App.css'
 
 function App() {
+  const [theme, setTheme] = useState('light-theme');
+
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
 
+  const toggleTheme = () => {
+    setTheme(theme === 'light-theme' ? 'dark-theme' : 'light-theme');
+  };
 
   async function fetchData() {
     try {
@@ -41,8 +46,8 @@ function App() {
 
   return (
     <Router>
-      <div className="app">
-        <Header />
+      <div className={`app ${theme}`}>
+        <Header toggleTheme={toggleTheme} />
         <Routes>
           <Route path="/" element={
             <div className="main-content">

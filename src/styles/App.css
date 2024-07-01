@@ -1,4 +1,29 @@
+/* Light Theme Styles */
+.light-theme {
+    --background-color: #fff;
+    --text-color: #000;
+    --text-color-secondary: #fff;
+    --sidebar-background-color: #F2F2F2;
+    --button-background-color: #A63E26;
+    --button-secondary-background-color: #F2F2F2;
+    --button-hover-color: #c06955;
+    --button-secondary-hover-color: #DCDCDC;
+}
+
+/* Dark Theme Styles */
+.dark-theme {
+    --background-color: #495057;
+    --text-color: #e0e0e0;
+    --text-color-secondary: #e0e0e0;
+    --sidebar-background-color: #343A40;
+    --button-background-color: #A63E26;
+    --button-secondary-background-color: #343A40;
+    --button-hover-color: #c06955;
+    --button-secondary-hover-color: #5a5a5a;
+}
+
 .app {
+    background-color: var(--background-color);
     display: flex;
     flex-direction: column;
     height: 100vh;

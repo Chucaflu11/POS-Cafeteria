@@ -15,7 +15,8 @@
 .check-card {
     display: flex;
     flex-direction: column;
-    background-color: white;
+    background-color: var(--background-color);
+    color: var(--text-color);
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
     padding: 1rem;
@@ -35,5 +36,5 @@
 }
 
 .check-card:hover {
-    background-color: #F2F2F2;
+    background-color: var(--sidebar-background-color);
 }

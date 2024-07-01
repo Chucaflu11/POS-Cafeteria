@@ -12,7 +12,8 @@
 }
 
 .category-products button {
-  background-color: #F2F2F2;
+  color: var(--text-color);
+  background-color: var(--button-secondary-background-color);
   border: none;
   font-size: 1rem;
   text-align: center;
@@ -24,5 +25,5 @@
 }
 
 .category-products button:hover {
-  background-color: #DCDCDC;
+  background-color: var(--button-secondary-hover-color);
 }

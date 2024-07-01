@@ -1,20 +1,21 @@
 .sidebar {
     width: 15rem;
     height: 100%;
-    background-color: #F2F2F2;
+    background-color: var(--sidebar-background-color);
     float: left;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
     padding: 0;
+    color: var(--text-color)
 }
 
 .sidebar h2 {
     font-style: bold;
     width: 100%;
     text-align: center;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid var(--text-color);
 }
 
 .sidebar ul {
@@ -37,7 +38,7 @@
 }
 
 .sidebar .total {
-    border-top: 1px solid black;
+    border-top: 1px solid var(--text-color);
     display: flex;
     justify-content: space-between;
     padding: 0 1rem 0 1rem;
@@ -50,8 +51,8 @@
 
 .pay-button {
     width: 90%;
-    background-color: #A63E26;
-    color: white;
+    background-color: var(--button-background-color);
+    color: var(--text-color-secondary);
     padding: 0.875rem 1.25rem;
     margin: 0.625rem;
     border: none;
@@ -62,5 +63,5 @@
 }
 
 .pay-button:hover {
-    background-color: #c06955;
+    background-color: var(--button-hover-color);
 }

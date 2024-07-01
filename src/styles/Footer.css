@@ -4,7 +4,7 @@
   height: 400px;
   bottom: 0;
   border-top: 1px solid #a63e26;
-  background-color: white;
+  background-color: var(--background-color);
 }
 
 .footer-button-container {
@@ -15,8 +15,8 @@
 }
 
 .footer-button-container button {
-  color: white;
-  background-color: #A63E26;
+  color: var(--text-color-secondary);
+  background-color: var(--button-background-color);
   border: none;
   font-size: 1rem;
   text-align: center;
@@ -28,5 +28,5 @@
 }
 
 .footer-button-container button:hover {
-  background-color: #c06955;
+  background-color: var(--button-hover-color);
 }

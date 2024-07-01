@@ -17,6 +17,7 @@
     flex-direction: row;
     align-items: center;
     margin: 1rem;
+    gap: 1rem;
 }
 
 .header .logo {
@@ -42,6 +43,24 @@
 }
 
 .dashboard-route-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.theme-icon {
+    height: 2em;
+    width: 2em;
+    color: white;
+    fill: currentColor;
+}
+
+.theme-icon:hover {
+    color: #d3c4c0;
+    fill: currentColor;
+}
+
+.toggle-theme-button {
     background: none;
     border: none;
     cursor: pointer;

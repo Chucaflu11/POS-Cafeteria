@@ -1,5 +1,5 @@
 .complement-sidebar {
-    background: white;
+    background: var(--background-color);
     position: fixed;
     right: 0;
     width: 15%;
@@ -16,8 +16,8 @@
 }
 
 .complement-sidebar button {
-    color: white;
-    background-color: #A63E26;
+    color: var(--text-color-secondary);
+    background-color: var(--button-background-color);
     border: none;
     font-size: 1rem;
     text-align: center;
@@ -29,5 +29,5 @@
 }
 
 .complement-sidebar button:hover {
-    background-color: #c06955;
+    background-color: var(--button-hover-color);
 }
