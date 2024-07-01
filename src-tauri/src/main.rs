@@ -213,6 +213,44 @@ fn add_topping(app_handle: AppHandle, nombre: &str, costo: i32) -> Result<(), St
 }
 
 #[tauri::command]
+fn add_check(app_handle: AppHandle, cart: Vec<Product>, payment_method: &str) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        // Calcular el total de la compra
+        let total = calculate_total(&cart);
+
+        // Insertar la boleta
+        conn.execute(
+            "INSERT INTO Boletas (fecha, metodo_pago, total) VALUES (?, ?, ?)",
+            params![get_timestamp(), payment_method, total],
+        )
+        .map_err(|e| e.to_string())?;
+
+        let boleta_id = conn.last_insert_rowid();
+
+        let mut product_quantities = HashMap::new();
+        for product in &cart {
+            *product_quantities.entry(product.id_producto).or_insert(0) += 1;
+        }
+
+        for (product_id, quantity) in product_quantities {
+            let product = cart.iter().find(|p| p.id_producto == product_id).unwrap();
+            conn.execute(
+                "INSERT INTO Detalle_Boleta (id_boleta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)",
+                params![boleta_id, product_id, quantity, product.precio_producto],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
 fn get_products(app_handle: AppHandle) -> Result<Vec<Product>, String> {
     let state = app_handle.state::<AppState>();
     let conn = state.db.lock().unwrap();
@@ -297,44 +335,6 @@ fn get_toppings(app_handle: AppHandle) -> Result<Vec<Topping>, String> {
 }
 
 #[tauri::command]
-fn add_check(app_handle: AppHandle, cart: Vec<Product>, payment_method: &str) -> Result<(), String> {
-    let state = app_handle.state::<AppState>();
-    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
-
-    if let Some(conn) = &mut *conn {
-        // Calcular el total de la compra
-        let total = calculate_total(&cart);
-
-        // Insertar la boleta
-        conn.execute(
-            "INSERT INTO Boletas (fecha, metodo_pago, total) VALUES (?, ?, ?)",
-            params![get_timestamp(), payment_method, total],
-        )
-        .map_err(|e| e.to_string())?;
-
-        let boleta_id = conn.last_insert_rowid();
-
-        let mut product_quantities = HashMap::new();
-        for product in &cart {
-            *product_quantities.entry(product.id_producto).or_insert(0) += 1;
-        }
-
-        for (product_id, quantity) in product_quantities {
-            let product = cart.iter().find(|p| p.id_producto == product_id).unwrap();
-            conn.execute(
-                "INSERT INTO Detalle_Boleta (id_boleta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)",
-                params![boleta_id, product_id, quantity, product.precio_producto],
-            )
-            .map_err(|e| e.to_string())?;
-        }
-
-        Ok(())
-    } else {
-        Err("No se pudo obtener la conexión a la base de datos".to_string())
-    }
-}
-
-#[tauri::command]
 fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<BoletaConDetalles>, String> {
     let state = app_handle.state::<AppState>();
     let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
@@ -411,6 +411,59 @@ fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<Bo
     }
 }
 
+#[tauri::command]
+fn delete_category(app_handle: AppHandle, category_id: i32) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        // Eliminar productos asociados a la categoría
+        conn.execute(
+            "DELETE FROM Productos WHERE id_categoria = ?",
+            params![category_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        // Eliminar la categoría
+        conn.execute(
+            "DELETE FROM Categoria WHERE id_categoria = ?",
+            params![category_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn delete_product(app_handle: AppHandle, product_id: i32) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        // Eliminar relaciones en Producto_Agregado (si es necesario)
+        conn.execute(
+            "DELETE FROM Producto_Agregado WHERE id_producto = ?",
+            params![product_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        // Eliminar el producto
+        conn.execute(
+            "DELETE FROM Productos WHERE id_producto = ?",
+            params![product_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+
 
 fn calculate_total(cart: &[Product]) -> i32 {
     cart.iter().map(|item| item.precio_producto).sum()
@@ -438,6 +491,8 @@ fn main() {
             get_categories,
             get_toppings,
             get_checks,
+            delete_category,
+            delete_product,
         ])
         .setup(|app| {
             let handle = app.handle();

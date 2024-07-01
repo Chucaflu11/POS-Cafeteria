@@ -31,26 +31,25 @@ function PaymentModal({ cart, setCart, closePayment }) {
   };
 
   const handleCompleteTransaction = async () => {
-    if (cart.length > 0) {
-      const paidAmount = parseFloat(cashPaid);
-      if (paidAmount < 0) {
-        setError('El monto pagado no puede ser negativo');
-        return;
-      }
-      else if (isNaN(paidAmount)) {
-        setError('El monto pagado no es válido');
-        return;
-      }
-      try {
-        await invoke('add_check', { cart, paymentMethod });
-        setCart([]);
-        closePayment();
-      } catch (error) {
-        setError('Error al completar la transacción');
-      }
-    }
-    else {
+    if (cart.length === 0) {
       setError('El carrito está vacío');
+      return;
+    }
+    const paidAmount = parseFloat(cashPaid);
+    if ((isNaN(paidAmount) || paidAmount < 0) && paymentMethod === 'efectivo') {
+      setError('El monto pagado no es válido');
+      return;
+    }
+    if (paymentMethod === 'efectivo' && paidAmount < total) {
+      setError('El monto pagado no es suficiente');
+      return;
+    }
+    try {
+      await invoke('add_check', { cart, paymentMethod });
+      setCart([]);
+      closePayment();
+    } catch (error) {
+      setError('Error al completar la transacción');
     }
   };
 
