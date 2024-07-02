@@ -1,8 +1,10 @@
 /* Light Theme Styles */
 .light-theme {
     --background-color: #fff;
+    --accent-color: #2C2C2C;
     --text-color: #000;
     --text-color-secondary: #fff;
+    --text-color-third: #fff;
     --sidebar-background-color: #F2F2F2;
     --button-background-color: #A63E26;
     --button-secondary-background-color: #F2F2F2;
@@ -15,6 +17,8 @@
     --background-color: #495057;
     --text-color: #e0e0e0;
     --text-color-secondary: #e0e0e0;
+    --text-color-third: #000;
+    --accent-color: #e0e0e0;
     --sidebar-background-color: #343A40;
     --button-background-color: #A63E26;
     --button-secondary-background-color: #343A40;

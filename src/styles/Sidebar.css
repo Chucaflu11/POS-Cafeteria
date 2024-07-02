@@ -37,6 +37,40 @@
     padding: 0 1rem 0 1rem;
 }
 
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-name {
+    flex-grow: 1;
+}
+
+.item-price {
+    text-align: right;
+    margin-left: auto;
+}
+
+.remove-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 1rem;
+}
+
+.remove-icon {
+    height: 1.2em;
+    width: 1.2em;
+    color: var(--text-color);
+    fill: currentColor;
+}
+
+.remove-icon:hover {
+    color: var(--button-hover-color);
+    fill: currentColor;
+}
+
 .sidebar .total {
     border-top: 1px solid var(--text-color);
     display: flex;
@@ -48,6 +82,31 @@
 .check {
     width: 100%;
 }
+
+.edit-button-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.edit-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.edit-icon {
+    height: 1.5em;
+    width: 1.5em;
+    color: var(--text-color);
+    fill: currentColor;
+}
+
+.edit-icon:hover {
+    color: var(--button-hover-color);
+    fill: currentColor;
+}
+
 
 .pay-button {
     width: 90%;

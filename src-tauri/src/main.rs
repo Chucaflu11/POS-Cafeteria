@@ -1,10 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use chrono::prelude::*;
 use rusqlite::{params, Connection, NO_PARAMS};
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::collections::HashMap;
-use chrono::prelude::*;
+use std::fs;
 use tauri::{AppHandle, Manager};
 
 // Data Models
@@ -20,13 +20,6 @@ struct Product {
     nombre_producto: String,
     id_categoria: i32,
     precio_producto: i32,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Topping {
-    id_agregado: i32,
-    nombre_agregado: String,
-    costo_agregado: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -45,9 +38,24 @@ struct DetalleBoleta {
     nombre_producto: String,
     cantidad: i32,
     precio_unitario: i32,
-    id_agregado: Option<i32>,
-    nombre_agregado: Option<String>,
-    costo_agregado: Option<i32>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct ClientFiadoData {
+    client_id: i64,
+    client_name: String,
+    debt_id: i64,
+    total_debt: i64,
+    amount_paid: i64,
+    remaining_debt: i64,
+    products: Vec<ClientFiadoProduct>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct ClientFiadoProduct {
+    product_id: i64,
+    product_name: String,
+    product_price: i64,
 }
 
 pub struct AppState {
@@ -84,33 +92,28 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
             FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria)
         );
 
-        CREATE TABLE IF NOT EXISTS Agregados (
-            id_agregado INTEGER PRIMARY KEY,
-            nombre_agregado TEXT,
-            costo_agregado INTEGER
-        );
-
-        CREATE TABLE IF NOT EXISTS Producto_Agregado (
-            id_producto INTEGER,
-            id_agregado INTEGER,
-            PRIMARY KEY (id_producto, id_agregado),
-            FOREIGN KEY (id_producto) REFERENCES Productos(id_producto),
-            FOREIGN KEY (id_agregado) REFERENCES Agregados(id_agregado)
-        );
-
         CREATE TABLE IF NOT EXISTS Clientes_Fiados (
             id_cliente INTEGER PRIMARY KEY,
             nombre_cliente TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS Deudas_Fiado (
+            id_deuda INTEGER PRIMARY KEY,
+            id_cliente INTEGER,
+            fecha_inicio TEXT,
+            monto_total INTEGER,
+            monto_pagado INTEGER DEFAULT 0, -- Nuevo campo para el monto pagado
+            FOREIGN KEY (id_cliente) REFERENCES Clientes_Fiados(id_cliente)
+        );
+
         CREATE TABLE IF NOT EXISTS Transacciones_Fiado (
             id_transaccion_fiado INTEGER PRIMARY KEY,
-            id_cliente INTEGER,
+            id_deuda INTEGER,
             id_producto INTEGER,
             cantidad INTEGER,
             fecha_venta TEXT,
-            monto_pendiente INTEGER,
-            FOREIGN KEY (id_cliente) REFERENCES Clientes_Fiados(id_cliente),
+            precio_unitario INTEGER, -- Nuevo campo para el precio unitario del producto en el momento de la transacción
+            FOREIGN KEY (id_deuda) REFERENCES Deudas_Fiado(id_deuda),
             FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
         );
 
@@ -127,10 +130,10 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
             id_producto INTEGER,
             cantidad INTEGER,
             precio_unitario INTEGER,
-            id_agregado INTEGER REFERENCES Agregados(id_agregado),
             FOREIGN KEY (id_boleta) REFERENCES Boletas(id_boleta),
             FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
         );
+
         ",
     )?;
 
@@ -179,33 +182,58 @@ fn add_product(
 }
 
 #[tauri::command]
-fn add_client(app_handle: AppHandle, nombre: &str) -> Result<(), String> {
+fn add_client(app_handle: AppHandle, nombre_cliente: &str) -> Result<i32, String> {
     let state = app_handle.state::<AppState>();
-    let mut conn = state.db.lock().unwrap();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &mut *conn {
         conn.execute(
             "INSERT INTO Clientes_Fiados (nombre_cliente) VALUES (?)",
-            params![nombre],
+            params![nombre_cliente],
         )
         .map_err(|e| e.to_string())?;
-        Ok(())
+
+        let id_cliente = conn.last_insert_rowid() as i32; 
+        Ok(id_cliente)
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
 
 #[tauri::command]
-fn add_topping(app_handle: AppHandle, nombre: &str, costo: i32) -> Result<(), String> {
+fn add_credit_transaction(
+    app_handle: AppHandle,
+    cart: Vec<Product>,
+    client_id: i64,
+) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
-    let mut conn = state.db.lock().unwrap();
+    let mut conn = state
+        .db
+        .lock()
+        .expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &mut *conn {
+        // Calcular el total de la compra
+        let total = calculate_total(&cart);
+
+        // Insertar la nueva deuda fiada
         conn.execute(
-            "INSERT INTO Agregados (nombre_agregado, costo_agregado) VALUES (?, ?)",
-            params![nombre, costo],
+            "INSERT INTO Deudas_Fiado (id_cliente, fecha_inicio, monto_total) VALUES (?, ?, ?)",
+            params![client_id, get_timestamp(), total],
         )
         .map_err(|e| e.to_string())?;
+
+        let debt_id = conn.last_insert_rowid();
+
+        // Registrar cada producto en Transacciones_Fiado
+        for product in &cart {
+            conn.execute(
+                "INSERT INTO Transacciones_Fiado (id_deuda, id_producto, cantidad, fecha_venta, precio_unitario) VALUES (?, ?, ?, ?, ?)",
+                params![debt_id, product.id_producto, 1, get_timestamp(), product.precio_producto],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
         Ok(())
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
@@ -213,9 +241,53 @@ fn add_topping(app_handle: AppHandle, nombre: &str, costo: i32) -> Result<(), St
 }
 
 #[tauri::command]
-fn add_check(app_handle: AppHandle, cart: Vec<Product>, payment_method: &str) -> Result<(), String> {
+fn pay_partial_debt(
+    app_handle: AppHandle,
+    debt_id: i64,
+    amount: i64,
+) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
-    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+    let mut conn = state
+        .db
+        .lock()
+        .expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        // Obtener el monto pagado actual
+        let current_paid: i64 = conn.query_row(
+            "SELECT monto_pagado FROM Deudas_Fiado WHERE id_deuda = ?",
+            params![debt_id],
+            |row| row.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+
+        // Calcular el nuevo monto pagado
+        let new_paid = current_paid + amount;
+
+        // Actualizar el monto pagado en la deuda fiada
+        conn.execute(
+            "UPDATE Deudas_Fiado SET monto_pagado = ? WHERE id_deuda = ?",
+            params![new_paid, debt_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn add_check(
+    app_handle: AppHandle,
+    cart: Vec<Product>,
+    payment_method: &str,
+) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state
+        .db
+        .lock()
+        .expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &mut *conn {
         // Calcular el total de la compra
@@ -256,18 +328,22 @@ fn get_products(app_handle: AppHandle) -> Result<Vec<Product>, String> {
     let conn = state.db.lock().unwrap();
 
     if let Some(conn) = &*conn {
-        let mut stmt = conn.prepare("SELECT id_producto, nombre_producto, id_categoria, precio_producto FROM Productos")
+        let mut stmt = conn
+            .prepare(
+                "SELECT id_producto, nombre_producto, id_categoria, precio_producto FROM Productos",
+            )
             .map_err(|e| e.to_string())?;
 
-        let products_iter = stmt.query_map(NO_PARAMS, |row| {
-            Ok(Product {
-                id_producto: row.get(0)?,
-                nombre_producto: row.get(1)?,
-                id_categoria: row.get(2)?,
-                precio_producto: row.get(3)?,
+        let products_iter = stmt
+            .query_map(NO_PARAMS, |row| {
+                Ok(Product {
+                    id_producto: row.get(0)?,
+                    nombre_producto: row.get(1)?,
+                    id_categoria: row.get(2)?,
+                    precio_producto: row.get(3)?,
+                })
             })
-        })
-        .map_err(|e| e.to_string())?;
+            .map_err(|e| e.to_string())?;
 
         // Recolecta los resultados en un Vec<Product>
         let products: Vec<Product> = products_iter.map(|row| row.unwrap()).collect(); // Maneja el error aquí
@@ -276,7 +352,6 @@ fn get_products(app_handle: AppHandle) -> Result<Vec<Product>, String> {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
-
 
 #[tauri::command]
 fn get_categories(app_handle: AppHandle) -> Result<Vec<Category>, String> {
@@ -305,35 +380,6 @@ fn get_categories(app_handle: AppHandle) -> Result<Vec<Category>, String> {
     }
 }
 
-
-#[tauri::command]
-fn get_toppings(app_handle: AppHandle) -> Result<Vec<Topping>, String> {
-    let state = app_handle.state::<AppState>();
-    let conn = state.db.lock().unwrap();
-
-    if let Some(conn) = &*conn {
-        let mut stmt = conn
-            .prepare("SELECT id_agregado, nombre_agregado, costo_agregado FROM Agregados")
-            .map_err(|e| e.to_string())?;
-
-        let toppings = stmt
-            .query_map(NO_PARAMS, |row| {
-                Ok(Topping {
-                    id_agregado: row.get(0)?,
-                    nombre_agregado: row.get(1)?,
-                    costo_agregado: row.get(2)?,
-                })
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<Topping>, _>>()
-            .map_err(|e| e.to_string())?;
-
-        Ok(toppings)
-    } else {
-        Err("No se pudo obtener la conexión a la base de datos".to_string())
-    }
-}
-
 #[tauri::command]
 fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<BoletaConDetalles>, String> {
     let state = app_handle.state::<AppState>();
@@ -351,10 +397,7 @@ fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<Bo
                 DB.id_producto,
                 P.nombre_producto,
                 DB.cantidad,
-                DB.precio_unitario,
-                DB.id_agregado,
-                A.nombre_agregado,
-                A.costo_agregado
+                DB.precio_unitario
             FROM (
                 SELECT *
                 FROM Boletas
@@ -362,8 +405,7 @@ fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<Bo
                 LIMIT ? OFFSET ?
             ) AS B
             LEFT JOIN Detalle_Boleta AS DB ON B.id_boleta = DB.id_boleta
-            LEFT JOIN Productos AS P ON DB.id_producto = P.id_producto
-            LEFT JOIN Agregados AS A ON DB.id_agregado = A.id_agregado;
+            LEFT JOIN Productos AS P ON DB.id_producto = P.id_producto;
         ";
 
         let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
@@ -387,9 +429,6 @@ fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<Bo
                     nombre_producto: row.get(6)?,
                     cantidad: row.get(7)?,
                     precio_unitario: row.get(8)?,
-                    id_agregado: row.get(9)?,
-                    nombre_agregado: row.get(10)?,
-                    costo_agregado: row.get(11)?,
                 });
             }
 
@@ -411,10 +450,137 @@ fn get_checks(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<Bo
     }
 }
 
+
+#[tauri::command]
+fn get_total_checks_count(app_handle: AppHandle) -> Result<i32, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state
+        .db
+        .lock()
+        .expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        let mut stmt = conn
+            .prepare("SELECT COUNT(*) FROM Boletas")
+            .map_err(|e| e.to_string())?;
+        let count: i32 = stmt
+            .query_row(NO_PARAMS, |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+        Ok(count)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_fiado_data(app_handle: AppHandle) -> Result<Vec<ClientFiadoData>, String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        let mut statement = conn.prepare(
+            "
+            SELECT
+                cf.id_cliente,
+                cf.nombre_cliente,
+                COALESCE(df.id_deuda, 0) AS id_deuda,
+                COALESCE(df.monto_total, 0) AS monto_total,
+                COALESCE(df.monto_pagado, 0) AS monto_pagado,
+                COALESCE(SUM(tf.cantidad * tf.precio_unitario), 0) AS total_deuda_restante,
+                COALESCE(p.id_producto, 0) AS id_producto,
+                COALESCE(p.nombre_producto, '') AS nombre_producto,
+                COALESCE(tf.precio_unitario, 0) AS precio_unitario_producto
+            FROM Clientes_Fiados cf
+            LEFT JOIN Deudas_Fiado df ON cf.id_cliente = df.id_cliente
+            LEFT JOIN Transacciones_Fiado tf ON df.id_deuda = tf.id_deuda
+            LEFT JOIN Productos p ON tf.id_producto = p.id_producto
+            GROUP BY cf.id_cliente, df.id_deuda, p.id_producto
+            ORDER BY cf.id_cliente, df.id_deuda, p.id_producto
+            ",
+        ).map_err(|e| e.to_string())?;
+
+        let mut fiado_data: Vec<ClientFiadoData> = vec![];
+
+        // Utilizamos query_map para manejar los resultados de la consulta
+        let rows = statement.query_map(NO_PARAMS, |row| {
+            let client_id: Result<i64, rusqlite::Error> = row.get(0);
+            let client_name: Result<String, rusqlite::Error> = row.get(1);
+            let debt_id: Result<i64, rusqlite::Error> = row.get(2);
+            let total_debt: Result<i64, rusqlite::Error> = row.get(3);
+            let amount_paid: Result<i64, rusqlite::Error> = row.get(4);
+            let remaining_debt: Result<i64, rusqlite::Error> = row.get(5);
+            let product_id: Result<i64, rusqlite::Error> = row.get(6);
+            let product_name: Result<String, rusqlite::Error> = row.get(7);
+            let product_price: Result<i64, rusqlite::Error> = row.get(8);
+
+            // Comprobamos que todos los resultados se hayan obtenido correctamente
+            Ok((
+                client_id?,
+                client_name?,
+                debt_id?,
+                total_debt?,
+                amount_paid?,
+                remaining_debt?,
+                product_id?,
+                product_name?,
+                product_price?,
+            ))
+        }).map_err(|e| e.to_string())?;
+
+        for result in rows {
+            let (
+                client_id,
+                client_name,
+                debt_id,
+                total_debt,
+                amount_paid,
+                remaining_debt,
+                product_id,
+                product_name,
+                product_price,
+            ) = result.map_err(|e| e.to_string())?;
+
+            // Buscar si ya existe el cliente en fiado_data
+            if let Some(client) = fiado_data.iter_mut().find(|c| c.client_id == client_id) {
+                // Si existe, agregar el producto a la lista de productos
+                client.products.push(ClientFiadoProduct {
+                    product_id,
+                    product_name,
+                    product_price,
+                });
+            } else {
+                // Si no existe, crear un nuevo cliente con su deuda y productos
+                fiado_data.push(ClientFiadoData {
+                    client_id,
+                    client_name,
+                    debt_id,
+                    total_debt,
+                    amount_paid,
+                    remaining_debt,
+                    products: vec![ClientFiadoProduct {
+                        product_id,
+                        product_name,
+                        product_price,
+                    }],
+                });
+            }
+        }
+
+        Ok(fiado_data)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+
+
 #[tauri::command]
 fn delete_category(app_handle: AppHandle, category_id: i32) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
-    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+    let conn = state
+        .db
+        .lock()
+        .expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &*conn {
         // Eliminar productos asociados a la categoría
@@ -443,14 +609,6 @@ fn delete_product(app_handle: AppHandle, product_id: i32) -> Result<(), String> 
     let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &*conn {
-        // Eliminar relaciones en Producto_Agregado (si es necesario)
-        conn.execute(
-            "DELETE FROM Producto_Agregado WHERE id_producto = ?",
-            params![product_id],
-        )
-        .map_err(|e| e.to_string())?;
-
-        // Eliminar el producto
         conn.execute(
             "DELETE FROM Productos WHERE id_producto = ?",
             params![product_id],
@@ -464,17 +622,14 @@ fn delete_product(app_handle: AppHandle, product_id: i32) -> Result<(), String> 
 }
 
 
-
 fn calculate_total(cart: &[Product]) -> i32 {
     cart.iter().map(|item| item.precio_producto).sum()
 }
 
 fn get_timestamp() -> String {
     let now = Local::now();
-    now.format("%d/%m/%y %H:%M:%S").to_string() 
+    now.format("%d/%m/%y %H:%M:%S").to_string()
 }
-
-
 
 fn main() {
     tauri::Builder::default()
@@ -485,12 +640,14 @@ fn main() {
             add_category,
             add_product,
             add_client,
-            add_topping,
+            add_credit_transaction,
+            pay_partial_debt,
             add_check,
             get_products,
             get_categories,
-            get_toppings,
             get_checks,
+            get_total_checks_count,
+            get_fiado_data,
             delete_category,
             delete_product,
         ])
