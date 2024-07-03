@@ -40,22 +40,24 @@ struct DetalleBoleta {
     precio_unitario: i32,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct ClientFiadoData {
-    client_id: i64,
+    client_id: i32,
     client_name: String,
-    debt_id: i64,
-    total_debt: i64,
-    amount_paid: i64,
-    remaining_debt: i64,
-    products: Vec<ClientFiadoProduct>,
+    debt_id: Option<i32>,
+    total_debt: i32,
+    amount_paid: i32,
+    remaining_debt: i32,
+    products: Vec<ProductFiadoData>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-struct ClientFiadoProduct {
-    product_id: i64,
+#[derive(Debug, Serialize, Deserialize)]
+struct ProductFiadoData {
+    product_id: i32,
     product_name: String,
-    product_price: i64,
+    product_price: i32,
+    quantity: i32,
+    transaction_date: String,
 }
 
 pub struct AppState {
@@ -193,7 +195,7 @@ fn add_client(app_handle: AppHandle, nombre_cliente: &str) -> Result<i32, String
         )
         .map_err(|e| e.to_string())?;
 
-        let id_cliente = conn.last_insert_rowid() as i32; 
+        let id_cliente = conn.last_insert_rowid() as i32;
         Ok(id_cliente)
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
@@ -473,98 +475,78 @@ fn get_total_checks_count(app_handle: AppHandle) -> Result<i32, String> {
 }
 
 #[tauri::command]
-fn get_fiado_data(app_handle: AppHandle) -> Result<Vec<ClientFiadoData>, String> {
+fn get_fiado_data(app_handle: AppHandle, page: i32, page_size: i32) -> Result<Vec<ClientFiadoData>, String> {
     let state = app_handle.state::<AppState>();
-    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
-    if let Some(conn) = &mut *conn {
-        let mut statement = conn.prepare(
-            "
+    if let Some(conn) = &*conn {
+        let offset = (page - 1) * page_size;
+        let query = "
             SELECT
                 cf.id_cliente,
                 cf.nombre_cliente,
-                COALESCE(df.id_deuda, 0) AS id_deuda,
-                COALESCE(df.monto_total, 0) AS monto_total,
-                COALESCE(df.monto_pagado, 0) AS monto_pagado,
-                COALESCE(SUM(tf.cantidad * tf.precio_unitario), 0) AS total_deuda_restante,
-                COALESCE(p.id_producto, 0) AS id_producto,
-                COALESCE(p.nombre_producto, '') AS nombre_producto,
-                COALESCE(tf.precio_unitario, 0) AS precio_unitario_producto
-            FROM Clientes_Fiados cf
+                df.id_deuda,
+                df.monto_total,
+                df.monto_pagado,
+                tf.id_producto,
+                p.nombre_producto,
+                tf.precio_unitario,
+                tf.cantidad,
+                tf.fecha_venta
+            FROM (
+                SELECT *
+                FROM Clientes_Fiados
+                LIMIT ? OFFSET ?
+            ) AS cf
             LEFT JOIN Deudas_Fiado df ON cf.id_cliente = df.id_cliente
             LEFT JOIN Transacciones_Fiado tf ON df.id_deuda = tf.id_deuda
             LEFT JOIN Productos p ON tf.id_producto = p.id_producto
-            GROUP BY cf.id_cliente, df.id_deuda, p.id_producto
-            ORDER BY cf.id_cliente, df.id_deuda, p.id_producto
-            ",
-        ).map_err(|e| e.to_string())?;
+            ORDER BY cf.id_cliente ASC, tf.fecha_venta DESC; 
+        ";
 
-        let mut fiado_data: Vec<ClientFiadoData> = vec![];
+        let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
 
-        // Utilizamos query_map para manejar los resultados de la consulta
-        let rows = statement.query_map(NO_PARAMS, |row| {
-            let client_id: Result<i64, rusqlite::Error> = row.get(0);
-            let client_name: Result<String, rusqlite::Error> = row.get(1);
-            let debt_id: Result<i64, rusqlite::Error> = row.get(2);
-            let total_debt: Result<i64, rusqlite::Error> = row.get(3);
-            let amount_paid: Result<i64, rusqlite::Error> = row.get(4);
-            let remaining_debt: Result<i64, rusqlite::Error> = row.get(5);
-            let product_id: Result<i64, rusqlite::Error> = row.get(6);
-            let product_name: Result<String, rusqlite::Error> = row.get(7);
-            let product_price: Result<i64, rusqlite::Error> = row.get(8);
+        let mut fiado_data_map: HashMap<i32, ClientFiadoData> = HashMap::new();
 
-            // Comprobamos que todos los resultados se hayan obtenido correctamente
-            Ok((
-                client_id?,
-                client_name?,
-                debt_id?,
-                total_debt?,
-                amount_paid?,
-                remaining_debt?,
-                product_id?,
-                product_name?,
-                product_price?,
-            ))
-        }).map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([page_size, offset], |row| {
+            let client_id: i32 = row.get(0)?;
+            let client_name: String = row.get(1)?;
+            let debt_id: Option<i32> = row.get(2)?;
+            let total_debt: i32 = row.get(3).unwrap_or(0);
+            let amount_paid: i32 = row.get(4).unwrap_or(0);
+            let product_id: Option<i32> = row.get(5)?;
+            let product_name: Option<String> = row.get(6)?;
+            let product_price: Option<i32> = row.get(7)?;
+            let quantity: Option<i32> = row.get(8)?;
+            let transaction_date: Option<String> = row.get(9)?;
 
-        for result in rows {
-            let (
+            let remaining_debt = total_debt - amount_paid;
+
+            fiado_data_map.entry(client_id).or_insert_with(|| ClientFiadoData {
                 client_id,
-                client_name,
+                client_name: client_name.clone(),
                 debt_id,
                 total_debt,
                 amount_paid,
                 remaining_debt,
-                product_id,
-                product_name,
-                product_price,
-            ) = result.map_err(|e| e.to_string())?;
+                products: vec![],
+            }).products.push(ProductFiadoData {
+                product_id: product_id.unwrap_or(0),
+                product_name: product_name.unwrap_or_default(),
+                product_price: product_price.unwrap_or(0),
+                quantity: quantity.unwrap_or(0),
+                transaction_date: transaction_date.unwrap_or_default(),
+            });
 
-            // Buscar si ya existe el cliente en fiado_data
-            if let Some(client) = fiado_data.iter_mut().find(|c| c.client_id == client_id) {
-                // Si existe, agregar el producto a la lista de productos
-                client.products.push(ClientFiadoProduct {
-                    product_id,
-                    product_name,
-                    product_price,
-                });
-            } else {
-                // Si no existe, crear un nuevo cliente con su deuda y productos
-                fiado_data.push(ClientFiadoData {
-                    client_id,
-                    client_name,
-                    debt_id,
-                    total_debt,
-                    amount_paid,
-                    remaining_debt,
-                    products: vec![ClientFiadoProduct {
-                        product_id,
-                        product_name,
-                        product_price,
-                    }],
-                });
-            }
-        }
+            Ok(())
+        })
+        .map_err(|e| e.to_string())?;
+
+        // Consumir el iterador para ejecutar la consulta
+        for _ in rows {}
+
+        // Convertir el HashMap en un Vec
+        let fiado_data: Vec<ClientFiadoData> = fiado_data_map.into_values().collect();
 
         Ok(fiado_data)
     } else {
@@ -573,6 +555,21 @@ fn get_fiado_data(app_handle: AppHandle) -> Result<Vec<ClientFiadoData>, String>
 }
 
 
+#[tauri::command]
+fn get_clientes_fiados_count(app_handle: AppHandle) -> Result<i32, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        let mut stmt = conn.prepare("SELECT COUNT(*) FROM Clientes_Fiados")
+            .map_err(|e| e.to_string())?;
+        let count: i32 = stmt.query_row(NO_PARAMS, |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+        Ok(count)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
 
 #[tauri::command]
 fn delete_category(app_handle: AppHandle, category_id: i32) -> Result<(), String> {
@@ -648,6 +645,7 @@ fn main() {
             get_checks,
             get_total_checks_count,
             get_fiado_data,
+            get_clientes_fiados_count,
             delete_category,
             delete_product,
         ])

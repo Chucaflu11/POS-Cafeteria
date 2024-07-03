@@ -8,6 +8,8 @@ import ComplementSidebar from './ComplementSidebar';
 
 import Dashboard from './Dashboard/Dashboard';
 
+import Clientes from './fiados/Clientes';
+
 import { invoke } from '@tauri-apps/api/tauri';
 
 import '../styles/App.css'
@@ -80,6 +82,7 @@ function App() {
             </div>
           } />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/clients" element={<Clientes />} />
         </Routes>
       </div>
     </Router>

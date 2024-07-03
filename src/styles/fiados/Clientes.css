@@ -1,0 +1,87 @@
+.clients-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.cliente {
+    color: var(--text-color);
+    background-color: var(--background-color);
+    border: none;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.cliente.activo {
+    color: var(--text-color);
+    background-color: var(--button-secondary-hover-color);
+}
+
+.add-client-button {
+    background-color: var(--accent-color);
+    color: var(--text-color-third);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 3rem;
+    height: 3rem;
+    margin-left: auto;
+    margin-right: 4rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    align-content: flex-start;
+    line-height: 3.5em;
+}
+
+.add-client-button span {
+    font-size: 3rem;
+    align-self: center;
+    
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.next-button {
+    font-size: 1rem !important;
+    height: 2rem !important;
+    width: 6.813rem !important;
+}
+
+.prev-button {
+    font-size: 1rem !important;
+    height: 2rem !important;
+    width: 6.813rem !important;
+}
+
+.pagination-controls button {
+    color: var(--text-color);
+    background: none;
+    border: none;
+    text-align: center;
+    border-radius: 1rem;
+    cursor: pointer;
+    height: 2rem;
+    width: 2rem;
+    margin: 0 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.3s ease;
+}
+
+.pagination-controls button.active {
+    background-color: var(--accent-color);
+    color: var(--text-color-third);
+}
+
+.pagination-controls span {
+    color: var(--text-color);
+    font-size: 1.2rem;
+    margin: 0 0.5rem;
+}

@@ -30,6 +30,24 @@
     font-size: 2em;
 }
 
+.clients-route-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.clients-icon {
+    height: 2.5em;
+    width: 2.5em;
+    color: white;
+    fill: currentColor;
+}
+
+.clients-icon:hover {
+    color: #d3c4c0;
+    fill: currentColor;
+}
+
 .dashboard-icon {
     height: 20em;
     width: 2em;

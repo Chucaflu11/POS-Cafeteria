@@ -1,0 +1,93 @@
+.clients-cards {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    overflow-y: scroll;
+    height: 60vh;
+}
+
+.clients-cards h3 {
+    margin: 0 0 0 0;
+}
+
+.encabezado {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.card-buttons{
+    align-items: right;
+    margin-left: auto;
+}
+
+.pagar-button {
+    background-color: red !important;
+}
+
+.card-buttons button {
+    background-color: var(--text-color-fourth);
+    color: var(--text-color-secondary);
+    border: none;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    margin-left: 1rem;
+    padding: 0.5em;
+    width: 6rem;
+}
+
+.contenido {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-grow: 1;
+    padding: 1rem;
+}
+
+.detalles-deuda {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.detalles-deuda p {
+    padding-right: 1rem;
+}
+
+.detalle-productos li {
+    list-style-type: none;
+
+}
+
+.arrow-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.arrow-up {
+    height: 2.5em;
+    width: 2.5em;
+    color: black;
+    fill: currentColor;
+}
+
+.arrow-up:hover {
+    color: #6d6b6b;
+    fill: currentColor;
+}
+
+.arrow-down {
+    height: 2.5em;
+    width: 2.5em;
+    color: black;
+    fill: currentColor;
+}
+
+.arrow-down:hover {
+    color: #6d6b6b;
+    fill: currentColor;
+}
