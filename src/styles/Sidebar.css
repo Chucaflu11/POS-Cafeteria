@@ -37,6 +37,10 @@
     padding: 0 1rem 0 1rem;
 }
 
+.sidebar p {
+    font-size: 1.4em;
+}
+
 .cart-item {
     display: flex;
     justify-content: space-between;

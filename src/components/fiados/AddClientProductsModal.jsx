@@ -34,8 +34,6 @@ function AddClientProductsModal({ closeClientProductsModal, clientId, fetchData 
         fetchProductsData();
     }, []);
 
-    // Añadir carrito. -> Fetch Productos -> Fetch Categorías. -> Agregar transacción.
-
     return (
         <div className="modal-overlay">
             <div className="modal-client-product-content">

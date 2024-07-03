@@ -3,10 +3,22 @@ import React, { useState } from 'react';
 import '../../styles/fiados/ClientsCard.css';
 import AddClientProductsModal from './AddClientProductsModal';
 
+import { invoke } from '@tauri-apps/api';
+import ClientPaymentModal from './ClientPaymentModal';
+
 function ClientsCard({ fetchedClients, fetchData }) {
     const [tarjetasAbiertas, setTarjetasAbiertas] = useState({});
 
     const [isClientProductsModalOpen, setIsClientProductsModalOpen] = useState(false);
+    const [isClientPaymentModalOpen, setIsClientPaymentModalOpen] = useState(false);
+
+    const openClientPaymentModal = () => {
+        setIsClientPaymentModalOpen(true);
+    };
+
+    const closeClientPaymentModal = () => {
+        setIsClientPaymentModalOpen(false);
+    };
 
     const openClientProductsModal = () => {
         setIsClientProductsModalOpen(true);
@@ -47,9 +59,12 @@ function ClientsCard({ fetchedClients, fetchData }) {
                                     <button >
                                         Editar
                                     </button>
-                                    <button className="pagar-button">
+                                    <button className="pagar-button" onClick={openClientPaymentModal}>
                                         Pagar
                                     </button>
+                                    {isClientPaymentModalOpen && (
+                                        <ClientPaymentModal closeClientPaymentModal={closeClientPaymentModal} debtId={cliente.debt_id} fetchData={fetchData} />
+                                    )}
                                 </div>
                         </div>
                         )}
@@ -87,8 +102,8 @@ function ClientsCard({ fetchedClients, fetchData }) {
                     {tarjetasAbiertas[cliente.client_id] && cliente.debt_id !== 0 && (
                         <div className="detalle-productos">
                             <ul>
-                                {cliente.products.map((producto) => (
-                                    <li key={`${producto.product_id}-${producto.transaction_date}`}>
+                                {cliente.products.map((producto, index) => (
+                                    <li key={`${producto.product_id}-${producto.transaction_date}-${index}`}>
                                         {producto.product_name} - ${producto.product_price} x {producto.quantity} - {producto.transaction_date}
                                     </li>
                                 ))}

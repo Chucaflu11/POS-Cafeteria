@@ -114,7 +114,7 @@ function Clientes() {
                 <span> + </span>
             </button>
             {isClientModalOpen && (
-                <AddClientModal closeClientModal={closeClientModal} />
+                <AddClientModal closeClientModal={closeClientModal} fetchData={fetchData} />
             )}
             <div className='pagination-controls'>
                 {renderPageButtons()}

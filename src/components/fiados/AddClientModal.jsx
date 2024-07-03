@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 
 import '../../styles/fiados/AddClientModal.css'
 
-function AddClientModal({ closeClientModal }) {
+function AddClientModal({ closeClientModal, fetchData }) {
     const [clientName, setClientName] = useState('');
     const [error, setError] = useState('');
 
@@ -21,6 +21,7 @@ function AddClientModal({ closeClientModal }) {
         }
         try {
             invoke("add_client", { nombreCliente: clientName });
+            fetchData();
         } catch (error) {
             setError('Error al agregar el cliente');
         }

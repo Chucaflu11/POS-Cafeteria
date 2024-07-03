@@ -60,6 +60,9 @@ function Sidebar({ cart, setCart }) {
         </ul>
         <div className='edit-button-container'>
           <button className='edit-button' onClick={toggleEditing}>
+            {isEditing ?
+            <p>X</p>
+            :
             <svg className='edit-icon'
               width="24"
               height="24"
@@ -78,6 +81,7 @@ function Sidebar({ cart, setCart }) {
                 fill="currentColor"
               />
             </svg>
+            }
           </button>
         </div>
         <div className='total'>
