@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import '../../styles/fiados/ClientsCard.css';
 import AddClientProductsModal from './AddClientProductsModal';
 
-function ClientsCard({ fetchedClients }) {
+function ClientsCard({ fetchedClients, fetchData }) {
     const [tarjetasAbiertas, setTarjetasAbiertas] = useState({});
 
     const [isClientProductsModalOpen, setIsClientProductsModalOpen] = useState(false);
@@ -42,7 +42,7 @@ function ClientsCard({ fetchedClients }) {
                                         Agregar
                                     </button>
                                     {isClientProductsModalOpen && (
-                                        <AddClientProductsModal closeClientProductsModal={closeClientProductsModal} clientId={cliente.client_id} />
+                                        <AddClientProductsModal closeClientProductsModal={closeClientProductsModal} clientId={cliente.client_id} fetchData={fetchData} />
                                     )}
                                     <button >
                                         Editar

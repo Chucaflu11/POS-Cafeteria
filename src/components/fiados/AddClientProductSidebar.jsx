@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 
+import { invoke } from "@tauri-apps/api/tauri";
+
 import '../../styles/fiados/AddClientProductSidebar.css';
 
-function AddClientProductSidebar({ cart, setCart, clientId }) {
+function AddClientProductSidebar({ cart, setCart, clientId, closeClientProductsModal, fetchData }) {
   const total = cart.reduce((acc, item) => acc + item.precio_producto, 0);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -18,24 +20,19 @@ function AddClientProductSidebar({ cart, setCart, clientId }) {
 
   async function addCreditTransaction(clientId) {
     console.log('Agregando transacción de crédito para el cliente con ID:', clientId);
-    // try {
-    //     const cart = [{
-    //         id_producto: 1,
-    //         nombre_producto: 'Sprite',
-    //         id_categoria: 1,
-    //         precio_producto: 1200
-    //     }];
-
-    //     const response = await invoke('add_credit_transaction', {
-    //         cart,
-    //         clientId
-    //     });
-    //     console.log('Transacción de crédito agregada correctamente:', response);
-    //     return response;
-    // } catch (error) {
-    //     console.error('Error al agregar transacción de crédito:', error);
-    //     throw error;
-    // }
+    try {
+        const response = await invoke('add_credit_transaction', {
+            cart,
+            clientId
+        });
+        console.log('Transacción de crédito agregada correctamente:', response);
+        fetchData();
+        closeClientProductsModal();
+        return response;
+    } catch (error) {
+        console.error('Error al agregar transacción de crédito:', error);
+        throw error;
+    }
 }
 
   return (

@@ -25,22 +25,22 @@ function Clientes() {
         setIsClientModalOpen(false);
     };
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const fetchedData = await invoke('get_fiado_data', { page, pageSize });
-                setFetchedClients(fetchedData);
-                console.log('Datos fiados obtenidos:', fetchedData);
-                setIsLastPage(fetchedData.length === 0);
-                const totalClients = await invoke('get_clientes_fiados_count');
-                console.log('Total de clientes:', totalClients);
-                setTotalPages(Math.ceil(totalClients / pageSize));
-            } catch (error) {
-                console.error('Error al obtener datos:', error);
-                setTotalPages(1);
-            }
+    const fetchData = async () => {
+        try {
+            const fetchedData = await invoke('get_fiado_data', { page, pageSize });
+            setFetchedClients(fetchedData);
+            console.log('Datos fiados obtenidos:', fetchedData);
+            setIsLastPage(fetchedData.length === 0);
+            const totalClients = await invoke('get_clientes_fiados_count');
+            console.log('Total de clientes:', totalClients);
+            setTotalPages(Math.ceil(totalClients / pageSize));
+        } catch (error) {
+            console.error('Error al obtener datos:', error);
+            setTotalPages(1);
         }
+    };
 
+    useEffect(() => {
         fetchData();
     }, [page, pageSize]);
 
@@ -104,10 +104,12 @@ function Clientes() {
 
         return buttons;
     };
+    
+    const sortedChecks = fetchedClients.sort((a, b) => a.client_id - b.client_id);
 
     return (
         <div className='clients-content' >
-            <ClientsCard fetchedClients={fetchedClients}/>
+            <ClientsCard fetchedClients={sortedChecks} fetchData={fetchData}/>
             <button className="add-client-button" onClick={openClientModal}> 
                 <span> + </span>
             </button>

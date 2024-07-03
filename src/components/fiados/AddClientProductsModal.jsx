@@ -7,14 +7,14 @@ import Footer from '../Footer';
 
 import '../../styles/fiados/AddClientProductsModal.css'
 
-function AddClientProductsModal({ closeClientProductsModal, clientId }) {
+function AddClientProductsModal({ closeClientProductsModal, clientId, fetchData }) {
 
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [cart, setCart] = useState([]);
 
-    async function fetchData() {
+    async function fetchProductsData() {
         try {
             const categoriesData = await invoke('get_categories');
             setCategories(categoriesData);
@@ -31,7 +31,7 @@ function AddClientProductsModal({ closeClientProductsModal, clientId }) {
     }
 
     useEffect(() => {
-        fetchData();
+        fetchProductsData();
     }, []);
 
     // Añadir carrito. -> Fetch Productos -> Fetch Categorías. -> Agregar transacción.
@@ -41,7 +41,7 @@ function AddClientProductsModal({ closeClientProductsModal, clientId }) {
             <div className="modal-client-product-content">
                 <div className="main-content">
                     <div className="content">
-                        <AddClientProductSidebar cart={cart} setCart={setCart} clientId={clientId} />
+                        <AddClientProductSidebar cart={cart} setCart={setCart} clientId={clientId} closeClientProductsModal={closeClientProductsModal} fetchData={fetchData} />
                         <div className="content-right">
                             <div className="products-menu">
                                 <div className="main-buttons">
