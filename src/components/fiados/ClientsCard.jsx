@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
 
 import '../../styles/fiados/ClientsCard.css';
+import AddClientProductsModal from './AddClientProductsModal';
 
 function ClientsCard({ fetchedClients }) {
     const [tarjetasAbiertas, setTarjetasAbiertas] = useState({});
+
+    const [isClientProductsModalOpen, setIsClientProductsModalOpen] = useState(false);
+
+    const openClientProductsModal = () => {
+        setIsClientProductsModalOpen(true);
+    };
+
+    const closeClientProductsModal = () => {
+        setIsClientProductsModalOpen(false);
+    };
 
     const toggleDetalles = (clientId) => {
         setTarjetasAbiertas((prevTarjetasAbiertas) => ({
@@ -11,28 +22,6 @@ function ClientsCard({ fetchedClients }) {
             [clientId]: !prevTarjetasAbiertas[clientId],
         }));
     };
-
-    async function addCreditTransaction(clientId) {
-        console.log('Agregando transacción de crédito para el cliente con ID:', clientId);
-        // try {
-        //     const cart = [{
-        //         id_producto: 1,
-        //         nombre_producto: 'Sprite',
-        //         id_categoria: 1,
-        //         precio_producto: 1200
-        //     }];
-
-        //     const response = await invoke('add_credit_transaction', {
-        //         cart,
-        //         clientId
-        //     });
-        //     console.log('Transacción de crédito agregada correctamente:', response);
-        //     return response;
-        // } catch (error) {
-        //     console.error('Error al agregar transacción de crédito:', error);
-        //     throw error;
-        // }
-    }
 
     return (
         <div className="clients-cards">
@@ -49,9 +38,12 @@ function ClientsCard({ fetchedClients }) {
                             </div>
                             
                                 <div className="card-buttons">
-                                    <button onClick={() => addCreditTransaction(cliente.client_id)}>
+                                    <button onClick={openClientProductsModal}>
                                         Agregar
                                     </button>
+                                    {isClientProductsModalOpen && (
+                                        <AddClientProductsModal closeClientProductsModal={closeClientProductsModal} clientId={cliente.client_id} />
+                                    )}
                                     <button >
                                         Editar
                                     </button>

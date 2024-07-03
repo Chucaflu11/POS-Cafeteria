@@ -1,0 +1,126 @@
+.sidebar {
+    width: 15rem;
+    height: 100%;
+    background-color: var(--sidebar-background-color);
+    float: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0;
+    color: var(--text-color)
+}
+
+.sidebar h2 {
+    font-style: bold;
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid var(--text-color);
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding-top: 1rem;
+    margin: 0;
+    overflow-y: auto;
+    height: calc(100vh - 250px);
+}
+
+.sidebar ul::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1em;
+    padding: 0 1rem 0 1rem;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-name {
+    flex-grow: 1;
+}
+
+.item-price {
+    text-align: right;
+    margin-left: auto;
+}
+
+.remove-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 1rem;
+}
+
+.remove-icon {
+    height: 1.2em;
+    width: 1.2em;
+    color: var(--text-color);
+    fill: currentColor;
+}
+
+.remove-icon:hover {
+    color: var(--button-hover-color);
+    fill: currentColor;
+}
+
+.sidebar .total {
+    border-top: 1px solid var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 1rem 0 1rem;
+    font-weight: bold;
+}
+
+.check {
+    width: 100%;
+}
+
+.edit-button-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.edit-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.edit-icon {
+    height: 1.5em;
+    width: 1.5em;
+    color: var(--text-color);
+    fill: currentColor;
+}
+
+.edit-icon:hover {
+    color: var(--button-hover-color);
+    fill: currentColor;
+}
+
+
+.pay-button {
+    width: 90%;
+    background-color: var(--button-background-color);
+    color: var(--text-color-secondary);
+    padding: 0.875rem 1.25rem;
+    margin: 0.625rem;
+    border: none;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.pay-button:hover {
+    background-color: var(--button-hover-color);
+}
