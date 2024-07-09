@@ -270,7 +270,7 @@ fn add_credit_transaction(
 }
 
 #[tauri::command]
-fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64) -> Result<(), String> {
+fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_method: &str) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
     let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
@@ -312,7 +312,7 @@ fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64) -> Result<
             // Convertir el HashMap en un vector de structs Product
             let cart: Result<Vec<Product>, String> = product_quantities
                 .iter()
-                .map(|(id_producto, cantidad)| {
+                .map(|(id_producto, _cantidad)| {
                     // Buscar el producto en la tabla Productos
                     conn.query_row(
                         "SELECT id_producto, nombre_producto, id_categoria, precio_producto FROM Productos WHERE id_producto = ?",
@@ -337,7 +337,7 @@ fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64) -> Result<
             // Insertar la boleta
             conn.execute(
                 "INSERT INTO Boletas (fecha, metodo_pago, total) VALUES (?, ?, ?)",
-                params![get_timestamp(), "Efectivo", total],
+                params![get_timestamp(), payment_method, total],
             )
             .map_err(|e| e.to_string())?;
 
