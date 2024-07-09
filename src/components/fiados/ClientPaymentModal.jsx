@@ -20,7 +20,7 @@ function ClientPaymentModal({ closeClientPaymentModal, debtId, fetchData }) {
             return;
         }
         try {
-            let amountPaid = 200;
+            let amountPaid = parseInt(partialPayment);
             const pay = invoke('pay_partial_debt', { debtId: debtId, amount: amountPaid });
             fetchData();
         } catch (error) {
