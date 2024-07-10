@@ -60,6 +60,13 @@ struct ProductFiadoData {
     transaction_date: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct SalesSummary {
+    total_ventas: i32,
+    total_ventas_efectivo: i32,
+    total_ventas_tarjeta: i32,
+}
+
 pub struct AppState {
     pub db: std::sync::Mutex<Option<Connection>>,
 }
@@ -699,6 +706,45 @@ fn get_clientes_fiados_count(app_handle: AppHandle) -> Result<i32, String> {
 }
 
 #[tauri::command]
+fn get_sales_summary(app_handle: AppHandle) -> Result<SalesSummary, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        // Obtener la fecha actual en el formato deseado
+        let fecha_actual = get_timestamp();
+        let fecha_actual = fecha_actual.split_whitespace().next().unwrap(); // Extraer solo la fecha
+
+        // Preparar consultas SQL con la fecha actual como parámetro
+        let mut total_ventas_stmt = conn
+            .prepare("SELECT SUM(total) FROM Boletas WHERE SUBSTR(fecha, 7, 2) || SUBSTR(fecha, 4, 2) || SUBSTR(fecha, 1, 2) = ?")
+            .map_err(|e| e.to_string())?;
+        let mut total_ventas_efectivo_stmt = conn
+            .prepare("SELECT SUM(total) FROM Boletas WHERE SUBSTR(fecha, 7, 2) || SUBSTR(fecha, 4, 2) || SUBSTR(fecha, 1, 2) = ? AND metodo_pago = 'efectivo'")
+            .map_err(|e| e.to_string())?;
+        let mut total_ventas_tarjeta_stmt = conn
+            .prepare("SELECT SUM(total) FROM Boletas WHERE SUBSTR(fecha, 7, 2) || SUBSTR(fecha, 4, 2) || SUBSTR(fecha, 1, 2) = ? AND metodo_pago = 'tarjeta'")
+            .map_err(|e| e.to_string())?;
+
+        // Extraer la fecha en formato 'yymmdd' desde fecha_actual
+        let fecha_formateada = format!("{}{}{}", &fecha_actual[6..8], &fecha_actual[3..5], &fecha_actual[0..2]);
+
+        let total_ventas: i32 = total_ventas_stmt.query_row([fecha_formateada.clone()], |row| row.get(0)).unwrap_or(0);
+        let total_ventas_efectivo: i32 = total_ventas_efectivo_stmt.query_row([fecha_formateada.clone()], |row| row.get(0)).unwrap_or(0);
+        let total_ventas_tarjeta: i32 = total_ventas_tarjeta_stmt.query_row([fecha_formateada], |row| row.get(0)).unwrap_or(0);
+
+        Ok(SalesSummary {
+            total_ventas,
+            total_ventas_efectivo,
+            total_ventas_tarjeta,
+        })
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+
+#[tauri::command]
 fn delete_category(app_handle: AppHandle, category_id: i32) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
     let conn = state
@@ -757,6 +803,11 @@ fn get_timestamp() -> String {
     now.format("%d/%m/%y %H:%M:%S").to_string()
 }
 
+#[tauri::command]
+fn send_timestamp() -> Result<String, String> {
+    Ok(get_timestamp())
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState {
@@ -775,8 +826,10 @@ fn main() {
             get_total_checks_count,
             get_fiado_data,
             get_clientes_fiados_count,
+            get_sales_summary,
             delete_category,
             delete_product,
+            send_timestamp
         ])
         .setup(|app| {
             let handle = app.handle();

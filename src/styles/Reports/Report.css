@@ -1,0 +1,55 @@
+.cierre-caja-container {
+    padding: 1rem 5rem 1rem 5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 1rem;
+}
+.cuadro {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.cuadro input {
+    width: 90%;
+    height: 2rem;
+    padding-left: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+}
+
+.cuadro label {
+    margin: 0.5rem 0 0.5rem 0;
+}
+
+.cuadro input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.cierre-caja-container button {
+    background: none;
+    background-color: var(--accent-color);
+    color: var(--text-color-secondary);
+    border: none;
+    border-radius: 2rem;
+    font-size: 1rem;
+    width: 50%;
+    height: 3rem;
+    cursor: pointer;
+}
+
+.cierre-caja-container button:hover {
+    background-color: var(--button-hover-color);
+}
+
+.report-button {
+    margin-left: 50%;
+    background-color: var(--button-secondary-hover-color) !important;
+    color: var(--text-color) !important;
+}
+
+.report-button:hover {
+    background-color: var(--button-hover-color) !important;
+}
