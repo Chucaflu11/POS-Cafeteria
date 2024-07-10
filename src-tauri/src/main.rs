@@ -5,6 +5,7 @@ use rusqlite::{params, Connection, NO_PARAMS};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
+use csv::WriterBuilder;
 use tauri::{AppHandle, Manager};
 
 // Data Models
@@ -65,6 +66,21 @@ struct SalesSummary {
     total_ventas: i32,
     total_ventas_efectivo: i32,
     total_ventas_tarjeta: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CierreCajaData {
+    total_ventas: i32,
+    total_efectivo: i32,
+    total_tarjeta: i32,
+    efectivo_inicial: i32,
+    efectivo_final: i32,
+    ingresos_efectivo: i32,
+    saldo_real: i32,
+    diferencia: i32,
+    fecha_inicio: String,
+    fecha_cierre: String,
+    hora_cierre: String,
 }
 
 pub struct AppState {
@@ -794,6 +810,147 @@ fn delete_product(app_handle: AppHandle, product_id: i32) -> Result<(), String> 
     }
 }
 
+#[tauri::command]
+fn generate_final_report(
+    app_handle: AppHandle,
+    csv_path: &str,
+    cierre_caja_data: CierreCajaData,
+) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        let fecha_actual = get_timestamp();
+        let fecha_actual = fecha_actual.split_whitespace().next().unwrap();
+
+        // Consulta SQL para obtener boletas y detalles de la fecha actual
+        let query = "
+            SELECT 
+                B.id_boleta, 
+                B.fecha, 
+                B.metodo_pago, 
+                B.total,
+                DB.id_detalle_boleta,
+                DB.id_producto,
+                P.nombre_producto,
+                DB.cantidad,
+                DB.precio_unitario
+            FROM (
+                SELECT *
+                FROM Boletas
+                WHERE SUBSTR(fecha, 7, 2) || SUBSTR(fecha, 4, 2) || SUBSTR(fecha, 1, 2) = ?
+            ) AS B
+            LEFT JOIN Detalle_Boleta AS DB ON B.id_boleta = DB.id_boleta
+            LEFT JOIN Productos AS P ON DB.id_producto = P.id_producto;
+        ";
+
+        let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+        let fecha_formateada = format!("{}{}{}", &fecha_actual[6..8], &fecha_actual[3..5], &fecha_actual[0..2]);
+
+        // Mapeo de resultados a BoletaConDetalles
+        let mut boletas_map: HashMap<i32, BoletaConDetalles> = HashMap::new();
+        let boletas_iter = stmt.query_map([fecha_formateada], |row| {
+            let id_boleta: i32 = row.get(0)?;
+            let boleta = boletas_map.entry(id_boleta).or_insert_with(|| BoletaConDetalles {
+                id_boleta,
+                fecha: row.get(1).expect("fecha"),
+                metodo_pago: row.get(2).expect("metodo_pago"),
+                total: row.get(3).expect("total"),
+                detalles: Vec::new(),
+            });
+
+            if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(4)? {
+                boleta.detalles.push(DetalleBoleta {
+                    id_detalle_boleta,
+                    id_producto: row.get(5)?,
+                    nombre_producto: row.get(6)?,
+                    cantidad: row.get(7)?,
+                    precio_unitario: row.get(8)?,
+                });
+            }
+
+            Ok(())
+        }).map_err(|e| e.to_string())?;
+
+        // Consumir el iterador para ejecutar la consulta
+        for _ in boletas_iter {}
+
+        let boletas: Vec<BoletaConDetalles> = boletas_map.into_values().collect();
+
+        let mut writer = WriterBuilder::new()
+            .delimiter(b';') 
+            .from_path(csv_path)
+            .map_err(|e| e.to_string())?;
+
+
+        // Escribir encabezados del CSV
+        writer.write_record(&[
+            "ID Boleta", "Fecha", "Metodo de Pago", "Total", "ID Detalle", "ID Producto", "Nombre Producto", "Cantidad", "Precio Unitario"
+        ]).map_err(|e| e.to_string())?;
+
+        // Escribir detalles de las boletas
+        for boleta in boletas {
+            for detalle in boleta.detalles {
+                writer.write_record(&[
+                    boleta.id_boleta.to_string(),
+                    boleta.fecha.clone(),
+                    boleta.metodo_pago.clone(),
+                    boleta.total.to_string(),
+                    detalle.id_detalle_boleta.to_string(),
+                    detalle.id_producto.to_string(),
+                    detalle.nombre_producto.clone(),
+                    detalle.cantidad.to_string(),
+                    detalle.precio_unitario.to_string(),
+                ]).map_err(|e| e.to_string())?;
+            }
+        }
+
+        // Escribir el resumen del cierre de caja
+        writer.write_record(&[
+            "Resumen Cierre de Caja", "", "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Total Ventas:", cierre_caja_data.total_ventas.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Total Efectivo:", cierre_caja_data.total_efectivo.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Total Tarjeta:", cierre_caja_data.total_tarjeta.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Efectivo Inicial:", cierre_caja_data.efectivo_inicial.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Efectivo Final:", cierre_caja_data.efectivo_final.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Ingresos Efectivo:", cierre_caja_data.ingresos_efectivo.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Saldo Real:", cierre_caja_data.saldo_real.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Diferencia:", cierre_caja_data.diferencia.to_string().as_str(), "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Fecha Inicio:", &cierre_caja_data.fecha_inicio, "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Fecha Cierre:", &cierre_caja_data.fecha_cierre, "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+        writer.write_record(&[
+            "Hora Cierre:", &cierre_caja_data.hora_cierre, "", "", "", "", "", "", ""
+        ]).map_err(|e| e.to_string())?;
+
+        writer.flush().map_err(|e| e.to_string())?;
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
 fn calculate_total(cart: &[Product]) -> i32 {
     cart.iter().map(|item| item.precio_producto).sum()
 }
@@ -829,6 +986,7 @@ fn main() {
             get_sales_summary,
             delete_category,
             delete_product,
+            generate_final_report,
             send_timestamp
         ])
         .setup(|app| {

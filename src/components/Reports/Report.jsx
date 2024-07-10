@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api';
+import {save} from '@tauri-apps/api/dialog'
 
 import '../../styles/Reports/Report.css';
 
@@ -20,6 +21,42 @@ function Report() {
             const data = await invoke('get_sales_summary');
             setSalesSummary(data);
             console.log('Reporte cargado:', data);
+        } catch (error) {
+            console.error('Error al generar reporte:', error);
+        }
+    }
+
+    const handleGenerateReportClick = async () => {
+        try {
+            // Crear el objeto CierreCajaData
+            const cierreCajaData = {
+              total_ventas: salesSummary.total_ventas,
+              total_efectivo: salesSummary.total_ventas_efectivo,
+              total_tarjeta: salesSummary.total_ventas_tarjeta,
+              efectivo_inicial: parseInt(efectivoInicial),
+              efectivo_final: parseInt(efectivoFinal),
+              ingresos_efectivo: parseInt(ingresosEfectivo),
+              saldo_real: parseInt(saldoReal),
+              diferencia: diferencias,
+              fecha_inicio: fechaInicio,
+              fecha_cierre: fechaCierre,
+              hora_cierre: horaCierre,
+            };
+
+            const name = fechaCierre.replace(/\//g, '') + '_' + horaCierre.replace(/:/g, '-');
+            
+            const save_path = await save({
+              defaultPath: '/' + name,
+              filters: [{
+                name: 'Excel',
+                extensions: ['csv']
+              }]
+            });
+            console.log('Guardado en:', save_path);
+            await invoke('generate_final_report', {
+              csvPath: save_path,
+              cierreCajaData: cierreCajaData,
+            });
         } catch (error) {
             console.error('Error al generar reporte:', error);
         }
@@ -108,7 +145,7 @@ function Report() {
           </div>
     
           {/* Botones */}
-          <button className='report-button'>Reporte</button>
+          <button className='report-button' onClick={handleGenerateReportClick} >Reporte</button>
           <button className='load-report-button' onClick={handleReporteClick}>Cargar Reporte</button>
         </div>
       );
