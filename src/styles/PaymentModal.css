@@ -41,6 +41,27 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.paymentMethod {
+    width: 100%;
+    min-width: 10vw;
+    height: 2rem;
+    padding-left: 0.5rem;
+    border: 1px solid var(--text-color);
+    border-radius: 0.5rem;
+}
+
+.cashPaid {
+    width: 15vw;
+    height: 2rem;
+    padding-left: 0.5rem;
+    border: 1px solid var(--text-color);
+    border-radius: 0.5rem;
+}
+
+.cashPaid input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+}
+
 .send-payment-button {
     color: white;
     background-color: #A63E26 !important;

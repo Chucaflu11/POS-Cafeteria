@@ -62,26 +62,27 @@ function ProductForm({ closeProdForm, categories }) {
         <h2>Producto</h2>
         <form>
           <div>
-            <label>Nombre de producto: </label>
             <input
               type="text"
               name="nombre"
+              className='product-name-input'
               value={productName}
               onChange={handleProductNameChange}
+              placeholder='Nombre del producto'
             />
           </div>
           <div>
-            <label>Precio del producto: </label>
             <input
-              type="text"
+              type="number"
               name="precio"
+              className='product-price-input'
               value={productPrice}
               onChange={handleProductPriceChange}
+              placeholder='Precio del producto'
             />
           </div>
           <div>
-            <label>Categoría: </label>
-            <select value={categoryId} onChange={handleCategoryIdChange}>
+            <select className='category-select' value={categoryId} onChange={handleCategoryIdChange}>
               <option value="">Seleccione una categoría</option>
               {categories.map((category) => (
                 <option key={category.id_categoria} value={category.id_categoria}>{category.nombre_categoria}</option>

@@ -28,8 +28,8 @@ function Header({ toggleTheme }) {
   return (
     <header className="header">
       <div className='title-header'>
-        <img src={logo} alt="Cafeteria Logo" className="logo" />
-        <h1>Cafetería Del Ángel</h1>
+        <img onClick={() => navigate('/')} src={logo} alt="Cafeteria Logo" className="logo" />
+        <h1 onClick={() => navigate('/')}>Cafetería Del Ángel</h1>
       </div>
       <div className='buttons-header'>
         <button className="dashboard-route-button" onClick={handleDashboardClick} >

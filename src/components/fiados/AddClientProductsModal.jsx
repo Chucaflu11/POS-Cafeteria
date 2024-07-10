@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { invoke } from "@tauri-apps/api/tauri";
 
 import AddClientProductSidebar from './AddClientProductSidebar';
-import CategoryProducts from '../CategoryProducts';
-import Footer from '../Footer';
+import Products from '../Products';
+import Categories from '../Categories';
 
 import '../../styles/fiados/AddClientProductsModal.css'
 
@@ -44,7 +44,7 @@ function AddClientProductsModal({ closeClientProductsModal, clientId, fetchData 
                             <div className="products-menu">
                                 <div className="main-buttons">
                                     {selectedCategory && (
-                                        <CategoryProducts
+                                        <Products
                                             products={products.filter(
                                                 (product) => product.id_categoria === selectedCategory.id_categoria
                                             )}
@@ -53,7 +53,7 @@ function AddClientProductsModal({ closeClientProductsModal, clientId, fetchData 
                                         />
                                     )}
                                 </div>
-                                <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
+                                <Categories categories={categories} setSelectedCategory={setSelectedCategory} />
                             </div>
                         </div>
                     </div>

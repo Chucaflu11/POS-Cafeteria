@@ -59,16 +59,14 @@ function PaymentModal({ cart, setCart, closePayment }) {
         <button className="close-payment-button" onClick={closePayment}>X</button>
         <h2>Pago</h2>
         <div style={{ marginBottom: "10px" }}>
-          <label htmlFor="paymentMethod">Método de pago: </label>
-          <select id="paymentMethod" value={paymentMethod} onChange={handlePaymentMethodChange}>
+          <select className="paymentMethod" value={paymentMethod} onChange={handlePaymentMethodChange}>
             <option value="efectivo">Efectivo</option>
             <option value="tarjeta">Tarjeta</option>
           </select>
         </div>
         {paymentMethod === 'efectivo' && (
           <div>
-            <label htmlFor="cashPaid">Efectivo recibido:</label>
-            <input type="number" id="cashPaid" pattern="[0-9]*" value={cashPaid} onChange={handleCashPaidChange} />
+            <input type="number" className="cashPaid" pattern="[0-9]*" value={cashPaid} onChange={handleCashPaidChange} placeholder='Efectivo recibido' />
             <p>Vuelto: {changeDue.toLocaleString()}</p>
           </div>
         )}

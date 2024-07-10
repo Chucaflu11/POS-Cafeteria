@@ -23,11 +23,13 @@
 .header .logo {
     height: 4rem;
     margin-right: 1em;
+    cursor: pointer;
 }
 
 .header h1 {
     color: white;
     font-size: 2em;
+    cursor: pointer;
 }
 
 .report-route-button {

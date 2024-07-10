@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import '../styles/Footer.css';
+import '../styles/Categories.css';
 
-function Footer({ setSelectedCategory, categories }) {
+function Categories({ setSelectedCategory, categories }) {
   const [gridColumnCount, setGridColumnCount] = useState(1);
   const footerRef = useRef(null);
 
@@ -39,4 +39,4 @@ function Footer({ setSelectedCategory, categories }) {
   );
 }
 
-export default Footer;
+export default Categories;

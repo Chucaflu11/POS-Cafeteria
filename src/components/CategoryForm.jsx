@@ -33,12 +33,13 @@ function CategoryForm({ closeCatForm }) {
         <h2>Categoría</h2>
         <form>
           <div>
-            <label>Nombre de categoría: </label>
             <input
               type="text"
               name="nombre"
+              className='input-category-name'
               value={categoryName}
               onChange={handleInputChange}
+              placeholder="Ingrese el nombre de la categoría"
             />
           </div>
           {error && <p style={{ color: 'red' }}>{error}</p>}

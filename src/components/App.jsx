@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import Footer from './Footer';
-import CategoryProducts from './CategoryProducts';
+import Categories from './Categories';
+import Products from './Products';
 import ComplementSidebar from './ComplementSidebar';
 
 import Dashboard from './Dashboard/Dashboard';
@@ -61,7 +61,7 @@ function App() {
                   <div className="products-menu">
                     <div className="main-buttons">
                       {selectedCategory && (
-                        <CategoryProducts
+                        <Products
                           products={products.filter(
                             (product) => product.id_categoria === selectedCategory.id_categoria
                           )}
@@ -70,7 +70,7 @@ function App() {
                         />
                       )}
                     </div>
-                    <Footer categories={categories} setSelectedCategory={setSelectedCategory} />
+                    <Categories categories={categories} setSelectedCategory={setSelectedCategory} />
                   </div>
                   <ComplementSidebar
                     cart={cart}
