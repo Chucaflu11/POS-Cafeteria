@@ -11,6 +11,7 @@
     --button-secondary-background-color: #F2F2F2;
     --button-hover-color: #c06955;
     --button-secondary-hover-color: #DCDCDC;
+    --placeholder-color: rgba(0, 0, 0, 0.4);
 }
 
 /* Dark Theme Styles */
@@ -22,10 +23,11 @@
     --text-color-fourth: #2C2C2C;
     --accent-color: #e0e0e0;
     --sidebar-background-color: #343A40;
-    --button-background-color: #A63E26;
+    --button-background-color: #a72f1a;
     --button-secondary-background-color: #343A40;
     --button-hover-color: #c06955;
     --button-secondary-hover-color: #5a5a5a;
+    --placeholder-color: rgba(255, 255, 255, 0.4);
 }
 
 .app {

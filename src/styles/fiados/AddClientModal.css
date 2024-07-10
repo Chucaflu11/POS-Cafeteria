@@ -39,7 +39,7 @@
     cursor: pointer;
     height: 1.5rem;
     width: 1.5rem;
-    background-color: var(--accent-color);
+    background-color: var(--text-color-fourth);
     color: var(--text-color-secondary)
 }
 
@@ -59,7 +59,7 @@
 
 .send-client-button {
     background: none;
-    background-color: var(--accent-color);
+    background-color: var(--text-color-fourth);
     color: var(--text-color-secondary);
     border: none;
     border-radius: 2rem;

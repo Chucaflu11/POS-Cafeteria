@@ -40,7 +40,7 @@
     cursor: pointer !important;
     height: 1rem !important;
     width: 1rem !important;
-    background-color: var(--accent-color) !important;
+    background-color: var(--text-color-fourth) !important;
     color: var(--text-color-secondary) !important;
 }
 
