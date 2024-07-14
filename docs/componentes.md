@@ -12,6 +12,13 @@ Este documento describe los componentes principales utilizados en el frontend de
   * [Componente CategoryForm](#componente-categoryform)
   * [Componente ProductForm](#componente-productform)
 * [Componente Categories](#componente-categories)
+* [Componente Dashboard](#componente-dashboard)
+  * [Componente ChecksCard](#componente-checkscard)
+* [Componente Clientes](#componente-clientes)
+  * [Componente ClientsCard](#componente-clientscard)
+  * [Componente AddClientModal](#componente-addclientmodal)
+  * [Componente AddClientProductsModal](#componente-addclientproductsmodal)
+* [Componente Report](#componente-report)
 
 ## Componente App
 
@@ -361,7 +368,7 @@ El componente `Categories` muestra una lista de botones, cada uno representando 
     />
 ```
 
-## Component Dashboard
+## Componente Dashboard
 
 ### **Descripción:**
 
@@ -400,7 +407,7 @@ El componente `Dashboard` se utiliza como una ruta en el componente principal `A
     <Route path="/dashboard" element={<Dashboard />} />
 ```
 
-## Component ChecksCard
+## Componente ChecksCard
 
 ### **Descripción:**
 
@@ -456,7 +463,7 @@ Este componente no define funciones personalizadas.
     />
 ```
 
-## Component Clientes
+## Componente Clientes
 
 ### **Descripción:**
 
@@ -497,7 +504,7 @@ No recibe props.
     <Route path="/clients" element={<Clientes />} />
 ```
 
-## Component ClientsCard
+## Componente ClientsCard
 
 ### **Descripción:**
 
@@ -542,7 +549,7 @@ El componente `ClientsCard` muestra una lista de tarjetas, donde cada tarjeta re
     <ClientsCard fetchedClients={fetchedClients} fetchData={fetchData} />
 ```
 
-## Component AddClientProductsModal
+## Componente AddClientProductsModal
 
 ### **Descripción:**
 
@@ -583,7 +590,7 @@ El componente `AddClientProductsModal` muestra un formulario modal que permite a
     <AddClientProductsModal closeClientProductsModal={closeClientProductsModal} clientId={cliente.client_id} fetchData={fetchData} />
 ```
 
-## Component AddClientProductsSidebar
+## Componente AddClientProductsSidebar
 
 ### **Descripción:**
 
@@ -634,7 +641,7 @@ El componente `AddClientProductsSidebar` es una barra lateral que se muestra den
     </div>
 ```
 
-## Component ClientPaymentModal
+## Componente ClientPaymentModal
 
 ### **Descripción:**
 
@@ -679,7 +686,7 @@ El componente `ClientPaymentModal` muestra un formulario modal que permite regis
     <ClientPaymentModal closeClientPaymentModal={closeClientPaymentModal} debtId={cliente.debt_id} fetchData={fetchData} />
 ```
 
-## Component AddClientModal
+## Componente AddClientModal
 
 ### **Descripción:**
 
@@ -722,7 +729,7 @@ El componente `AddClientModal`  muestra un formulario modal para agregar nuevos 
     <AddClientModal closeClientModal={closeClientModal} fetchData={fetchData} />
 ```
 
-## Component Report
+## Componente Report
 
 ### **Descripción:**
 
