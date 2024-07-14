@@ -4,9 +4,9 @@
 
 Antes de comenzar a trabajar con esta aplicación, asegúrate de tener instalados los siguientes elementos:
 
-1. **Tauri:** Tauri es un framework para construir aplicaciones de escritorio con tecnologías web. Puedes encontrar instrucciones detalladas de instalación en [el sitio web oficial de Tauri](https://tauri.studio/docs/getting-started/intro).
+1. **Tauri:** Puedes encontrar instrucciones detalladas de instalación en [el sitio web oficial de Tauri](https://tauri.app/).
 
-2. **React:** React es una biblioteca de JavaScript para construir interfaces de usuario. Si no tienes React instalado, puedes seguir [las instrucciones de instalación](https://es.reactjs.org/docs/getting-started.html).
+2. **NodeJS y npm:** Si no tienes instalado alguno de los dos, puedes seguir [las instrucciones de instalación](https://es.reactjs.org/docs/getting-started.html).
 
 3. **rustqlite:** Rustqlite es una biblioteca de SQLite para Rust. Aunque viene incluida en el `Cargo.toml`, puede que necesites instalar SQLite en tu sistema. Puedes hacerlo utilizando el administrador de paquetes de tu sistema operativo o a través de [la página de descargas de SQLite](https://www.sqlite.org/download.html).
 
