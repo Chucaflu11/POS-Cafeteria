@@ -53,6 +53,8 @@
 }
 
 .close-button {
+    background-color: var(--button-background-color) !important;
+    color: var(--text-color-secondary) !important;
     position: absolute;
     top: 10px;
     right: 10px;
@@ -65,12 +67,14 @@
     width: 3vh !important;
 }
 
-.send-button {
-    background: none;
-    border: none;
-    font-size: 10px;
-    cursor: pointer;
+.send-product-button {
+    background: none !important;
+    background-color: var(--button-background-color) !important;
+    color: var(--text-color-secondary) !important;
+    border: none !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
     height: 4vh !important;
     width: 6vw !important;
-    margin-top: 10px;
+    margin-top: 0.5rem;
 }

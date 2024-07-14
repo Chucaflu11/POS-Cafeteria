@@ -23,6 +23,7 @@ function App() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [cart, setCart] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   const toggleTheme = () => {
     setTheme(theme === 'light-theme' ? 'dark-theme' : 'light-theme');
@@ -67,6 +68,10 @@ function App() {
                           )}
                           cart={cart}
                           setCart={setCart}
+                          isEditing={isEditing}
+                          setIsEditing={setIsEditing}
+                          categories={categories}
+                          fetchData={fetchData}
                         />
                       )}
                     </div>
@@ -78,6 +83,8 @@ function App() {
                     setSelectedCategory={setSelectedCategory}
                     fetchData={fetchData}
                     categories={categories}
+                    selectedCategory={selectedCategory}
+                    setIsEditing={setIsEditing}
                   />
                 </div>
               </div>

@@ -1,51 +1,70 @@
-import React, { useState } from 'react';
-import { invoke } from "@tauri-apps/api/tauri";
+import React, { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/tauri';
 import '../styles/CategoryForm.css';
 
-function CategoryForm({ closeCatForm }) {
+const CategoryForm = ({ closeCatForm, isEditing, setIsEditing, currentCategory }) => {
   const [categoryName, setCategoryName] = useState('');
   const [error, setError] = useState('');
 
-  const handleInputChange = (event) => {
+  useEffect(() => {
+    if (isEditing && currentCategory) {
+      setCategoryName(currentCategory.nombre_categoria);
+    } else {
+      setCategoryName('');
+    }
+  }, [isEditing, currentCategory]);
+
+  const handleCategoryNameChange = (event) => {
     setCategoryName(event.target.value);
     setError('');
   };
 
-  const addCategory = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!categoryName.trim()) {
       setError('El nombre de la categoría no puede estar vacío');
       return;
     }
+
     try {
-      invoke("add_category", { nombre: categoryName });
+      console.log('currentCategory:', currentCategory, 'isEditing:', isEditing);
+      if (isEditing && currentCategory) {
+        await invoke('update_category', {
+          idCategoria: currentCategory.id_categoria,
+          nuevoNombre: categoryName,
+        });
+      } else {
+        await invoke('add_category', { nombre: categoryName });
+      }
+      closeCatForm();
+      setIsEditing(false);
     } catch (error) {
-      setError('Error al agregar la categoría');
+      console.error('Error al guardar la categoría:', error);
+      setError('Hubo un error al guardar la categoría. Por favor, inténtalo de nuevo.');
     }
-    closeCatForm();
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="close-button" onClick={closeCatForm}>X</button>
-        <h2>Categoría</h2>
-        <form>
+        <button className="close-button" onClick={closeCatForm}>
+          X
+        </button>
+        <h2>{isEditing ? 'Editar Categoría' : 'Agregar Categoría'}</h2>
+        <form onSubmit={handleSubmit}>
           <div>
             <input
               type="text"
-              name="nombre"
-              className='input-category-name'
+              name="categoryName"
+              className="category-name-input"
               value={categoryName}
-              onChange={handleInputChange}
-              placeholder="Ingrese el nombre de la categoría"
+              onChange={handleCategoryNameChange}
+              placeholder='Nombre de la categoría'
             />
           </div>
           {error && <p style={{ color: 'red' }}>{error}</p>}
-          <div>
-            <button className='send-button' onClick={addCategory} type="submit">Enviar</button>
-          </div>
+          <button className='send-category-button' type="submit">{isEditing ? 'Guardar' : 'Agregar'}</button>
         </form>
       </div>
     </div>

@@ -11,6 +11,10 @@
   list-style: none;
 }
 
+.category-products-list button {
+  position: relative;
+}
+
 .category-products button {
   color: var(--text-color);
   background-color: var(--button-secondary-background-color);
@@ -26,4 +30,13 @@
 
 .category-products button:hover {
   background-color: var(--button-secondary-hover-color);
+}
+
+.edit-product-icon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  color: red;
 }

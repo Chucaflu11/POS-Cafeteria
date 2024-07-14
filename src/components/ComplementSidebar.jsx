@@ -5,7 +5,7 @@ import ProductForm from './ProductForm';
 
 import { invoke } from '@tauri-apps/api/tauri';
 
-function ComplementSidebar({ cart, setCart, fetchData, categories }) {
+function ComplementSidebar({ cart, setCart, fetchData, categories, selectedCategory, setIsEditing }) {
 
   const removeLastItem = () => {
     const newCart = [...cart];
@@ -13,16 +13,18 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
     setCart(newCart);
   };
 
-  async function deleteCategory(categoryId) {
-    try {
-      await invoke('delete_category', { categoryId });
-      fetchData();
-    } catch (error) {
-      console.error('Error al eliminar categoría:', error);
-    }
-  }
+  // ------------------------------------Future work----------------------------------------
+  // async function deleteCategory(categoryId) {
+  //   try {
+  //     await invoke('delete_category', { categoryId });
+  //     fetchData();
+  //   } catch (error) {
+  //     console.error('Error al eliminar categoría:', error);
+  //   }
+  // }
 
   const [isCatFormOpen, setIsCatFormOpen] = useState(false);
+  const [isCatEditingFormOpen, setIsCatEditingFormOpen] = useState(false);
   const [isProdFormOpen, setIsProdFormOpen] = useState(false);
 
   const openCatForm = () => {
@@ -43,29 +45,36 @@ function ComplementSidebar({ cart, setCart, fetchData, categories }) {
     fetchData();
   };
 
+  const openCatFormForEditing = () => {
+    setIsCatEditingFormOpen(true);
+  };
+
+  const closeCatFormForEditing = () => {
+    setIsCatEditingFormOpen(false);
+    fetchData();
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(prevIsEditing => !prevIsEditing);
+  };
+
   return (
     <div className="complement-sidebar">
       <div className="button-container">
         <button onClick={openCatForm}>Agregar Categoría</button>
         {isCatFormOpen && (
-          <CategoryForm closeCatForm={closeCatForm} />
+          <CategoryForm closeCatForm={closeCatForm} isEditing={false} setIsEditing={setIsEditing} currentCategory={selectedCategory} />
         )}
         <button onClick={openProdForm}>Agregar Producto</button>
         {isProdFormOpen && (
-          <ProductForm closeProdForm={closeProdForm} categories={categories} />
+          <ProductForm closeProdForm={closeProdForm} categories={categories} isEditing={false} setIsEditing={setIsEditing} />
         )}
         <button onClick={removeLastItem}>Remover último ítem</button>
-        <button>Botón 4</button>
-        <button>Botón 5</button>
-        <button>Botón 6</button>
-        <button>Botón 7</button>
-        <button>Botón 8</button>
-        <button>Botón 9</button>
-        <button>Botón 10</button>
-        <button>Botón 11</button>
-        <button>Botón 12</button>
-        <button>Botón 13</button>
-        <button onClick={() => deleteCategory(1)}>Eliminar categoría</button>
+        <button onClick={openCatFormForEditing}>Editar Categorías</button>
+        {isCatEditingFormOpen && (
+          <CategoryForm closeCatForm={closeCatFormForEditing} isEditing={true} setIsEditing={setIsEditing} currentCategory={selectedCategory} />
+        )}
+        <button onClick={handleEditClick}>Editar Productos</button>
       </div>
     </div>
   );

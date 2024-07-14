@@ -24,7 +24,7 @@
     position: relative;
 }
 
-.input-category-name {
+.category-name-input {
     width: 15vw;
     height: 2rem;
     padding-left: 0.5rem;
@@ -44,12 +44,13 @@
     width: 20px !important;
 }
 
-.send-button {
-    background: none;
-    border: none;
-    font-size: 10px;
-    cursor: pointer;
-    height: 30px !important;
-    width: 60px !important;
-    margin-top: 10px;
+.send-category-button {
+    background: none !important;
+    background-color: var(--button-background-color) !important;
+    color: var(--text-color-secondary) !important;
+    border: none !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    height: 4vh !important;
+    width: 6vw !important;
 }

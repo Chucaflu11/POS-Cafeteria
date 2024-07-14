@@ -185,6 +185,28 @@ fn add_category(app_handle: AppHandle, nombre: &str) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn update_category(
+    app_handle: AppHandle,
+    id_categoria: i32,
+    nuevo_nombre: String,
+) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        conn.execute(
+            "UPDATE Categoria SET nombre_categoria = ? WHERE id_categoria = ?",
+            params![nuevo_nombre, id_categoria],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+
+#[tauri::command]
 fn add_product(
     app_handle: AppHandle,
     nombre: &str,
@@ -205,6 +227,48 @@ fn add_product(
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
+
+#[tauri::command]
+fn update_product(
+    app_handle: AppHandle,
+    id_producto: i32,
+    nuevo_nombre: String,
+    nueva_categoria: i32,
+    nuevo_precio: i32,
+) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        // Verificar si la categoría existe (corregido)
+        let categoria_existe: Result<i32, rusqlite::Error> = conn.query_row::<_, _, _>( // Corregido argumentos de tipo
+            "SELECT COUNT(*) FROM Categoria WHERE id_categoria = ?",
+            [&nueva_categoria], // Convertido en slice
+            |row| row.get(0),
+        ); 
+
+        // Manejar el resultado de la consulta (corregido)
+        if let Ok(count) = categoria_existe {
+            if count == 0 {
+                return Err("La categoría especificada no existe".to_string());
+            }
+        } else {
+            return Err(categoria_existe.unwrap_err().to_string());
+        }
+
+        // Actualizar el producto
+        conn.execute(
+            "UPDATE Productos SET nombre_producto = ?, id_categoria = ?, precio_producto = ? WHERE id_producto = ?",
+            params![nuevo_nombre, nueva_categoria, nuevo_precio, id_producto],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
 
 #[tauri::command]
 fn add_client(app_handle: AppHandle, nombre_cliente: &str) -> Result<i32, String> {
@@ -972,7 +1036,9 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             add_category,
+            update_category,
             add_product,
+            update_product,
             add_client,
             add_credit_transaction,
             pay_partial_debt,
