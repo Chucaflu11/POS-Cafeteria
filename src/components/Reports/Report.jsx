@@ -5,14 +5,15 @@ import {save} from '@tauri-apps/api/dialog'
 import '../../styles/Reports/Report.css';
 
 function Report() {
+    const [error, setError] = useState('');
     const [salesSummary, setSalesSummary] = useState([]);
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaCierre, setFechaCierre] = useState('');
     const [horaCierre, setHoraCierre] = useState('');
-    const [efectivoInicial, setEfectivoInicial] = useState('');
-    const [efectivoFinal, setEfectivoFinal] = useState(0); // Inicializa en 0
+    const [efectivoInicial, setEfectivoInicial] = useState(0);
+    const [efectivoFinal, setEfectivoFinal] = useState(0);
     const [ingresosEfectivo, setIngresosEfectivo] = useState(0);
-    const [saldoReal, setSaldoReal] = useState('');
+    const [saldoReal, setSaldoReal] = useState(0);
     const [diferencias, setDiferencias] = useState(0);
 
 
@@ -58,7 +59,7 @@ function Report() {
               cierreCajaData: cierreCajaData,
             });
         } catch (error) {
-            console.error('Error al generar reporte:', error);
+            setError('Error al generar reporte: '+ error);
         }
     }
 
@@ -147,6 +148,7 @@ function Report() {
           {/* Botones */}
           <button className='report-button' onClick={handleGenerateReportClick} >Reporte</button>
           <button className='load-report-button' onClick={handleReporteClick}>Cargar Reporte</button>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
       );
 };
