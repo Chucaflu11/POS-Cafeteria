@@ -109,12 +109,15 @@ function Clientes() {
 
     return (
         <div className='clients-content' >
-            <ClientsCard fetchedClients={sortedChecks} fetchData={fetchData}/>
+            <ClientsCard 
+                fetchedClients={sortedChecks}
+                fetchData={fetchData}
+            />
             <button className="add-client-button" onClick={openClientModal}> 
                 <span> + </span>
             </button>
             {isClientModalOpen && (
-                <AddClientModal closeClientModal={closeClientModal} fetchData={fetchData} />
+                <AddClientModal closeClientModal={closeClientModal} fetchData={fetchData} isEditing={false} currentClient={null} />
             )}
             <div className='pagination-controls'>
                 {renderPageButtons()}

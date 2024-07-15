@@ -293,6 +293,24 @@ fn add_client(app_handle: AppHandle, nombre_cliente: &str) -> Result<i32, String
 }
 
 #[tauri::command]
+fn update_client(app_handle: AppHandle, client_id: i32, nuevo_nombre: String) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        conn.execute(
+            "UPDATE Clientes_Fiados SET nombre_cliente = ? WHERE id_cliente = ?",
+            params![nuevo_nombre, client_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
 fn add_credit_transaction(
     app_handle: AppHandle,
     cart: Vec<Product>,
@@ -1040,6 +1058,7 @@ fn main() {
             add_product,
             update_product,
             add_client,
+            update_client,
             add_credit_transaction,
             pay_partial_debt,
             add_check,
