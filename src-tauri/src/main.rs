@@ -25,10 +25,13 @@ struct Product {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct BoletaConDetalles {
-    id_boleta: i32,
+    id_boleta: i64,
     fecha: String,
     metodo_pago: String,
-    total: i32,
+    total: i64,
+    propina: i64, // Nuevo campo para la propina
+    tipo_pedido: String, // Nuevo campo para el tipo de pedido
+    numero_mesa: i64, // Nuevo campo para el número de mesa
     detalles: Vec<DetalleBoleta>,
 }
 
@@ -112,8 +115,9 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
         CREATE TABLE IF NOT EXISTS Productos (
             id_producto INTEGER PRIMARY KEY,
             nombre_producto TEXT,
-            id_categoria INTEGER,
             precio_producto INTEGER,
+            id_categoria INTEGER,
+            activo BOOLEAN DEFAULT TRUE,
             FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria)
         );
 
@@ -122,31 +126,23 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
             nombre_cliente TEXT
         );
 
-        CREATE TABLE IF NOT EXISTS Deudas_Fiado (
-            id_deuda INTEGER PRIMARY KEY,
-            id_cliente INTEGER,
-            fecha_inicio TEXT,
-            monto_total INTEGER,
-            monto_pagado INTEGER DEFAULT 0, -- Nuevo campo para el monto pagado
-            FOREIGN KEY (id_cliente) REFERENCES Clientes_Fiados(id_cliente)
-        );
-
         CREATE TABLE IF NOT EXISTS Transacciones_Fiado (
             id_transaccion_fiado INTEGER PRIMARY KEY,
-            id_deuda INTEGER,
-            id_producto INTEGER,
+            id_cliente INTEGER,
+            fecha_venta INTEGER,
             cantidad INTEGER,
-            fecha_venta TEXT,
-            precio_unitario INTEGER, -- Nuevo campo para el precio unitario del producto en el momento de la transacción
-            FOREIGN KEY (id_deuda) REFERENCES Deudas_Fiado(id_deuda),
-            FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
+            monto_pendiente INTEGER,
+            FOREIGN KEY (id_cliente) REFERENCES Clientes_Fiados(id_cliente)
         );
 
         CREATE TABLE IF NOT EXISTS Boletas (
             id_boleta INTEGER PRIMARY KEY,
-            fecha TEXT,
+            fecha INTEGER,
             metodo_pago TEXT,
-            total INTEGER
+            total INTEGER,
+            propina INTEGER,
+            tipo_pedido TEXT,
+            numero_mesa INTEGER
         );
 
         CREATE TABLE IF NOT EXISTS Detalle_Boleta (
@@ -159,13 +155,25 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
             FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
         );
 
+        CREATE TABLE IF NOT EXISTS Mesas (
+            id_mesa INTEGER PRIMARY KEY,
+            nombre_mesa TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS Transacciones_de_mesa (
+            id_transaccion_mesa INTEGER PRIMARY KEY,
+            id_mesa INTEGER,
+            id_producto INTEGER,
+            cantidad INTEGER,
+            FOREIGN KEY (id_mesa) REFERENCES Mesas(id_mesa),
+            FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
+        );
         ",
     )?;
 
-    println!("Database schema created");
-
     Ok(())
 }
+
 
 #[tauri::command]
 fn add_category(app_handle: AppHandle, nombre: &str) -> Result<(), String> {
@@ -260,6 +268,129 @@ fn update_product(
         conn.execute(
             "UPDATE Productos SET nombre_producto = ?, id_categoria = ?, precio_producto = ? WHERE id_producto = ?",
             params![nuevo_nombre, nueva_categoria, nuevo_precio, id_producto],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn add_table(app_handle: AppHandle, nombre_mesa: &str) -> Result<i32, String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state
+        .db
+        .lock()
+        .expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        conn.execute(
+            "INSERT INTO Mesas (nombre_mesa) VALUES (?)",
+            params![nombre_mesa],
+        )
+        .map_err(|e| e.to_string())?;
+
+        let id_cliente = conn.last_insert_rowid() as i32;
+        Ok(id_cliente)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn add_table_transaction(app_handle: AppHandle, table_id: i64, cart: Vec<Product>) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        // Verificar si la mesa existe
+        let mesa_existe: bool = conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM Mesas WHERE id_mesa = ?)",
+            params![table_id],
+            |row| row.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+
+        if !mesa_existe {
+            return Err("La mesa especificada no existe".to_string());
+        }
+
+        // Insertar los detalles de la transacción directamente (sin transacción principal)
+        for product in cart {
+            conn.execute(
+                "INSERT INTO Transacciones_de_mesa (id_mesa, id_producto, cantidad) VALUES (?, ?, ?)",
+                params![table_id, product.id_producto, 1],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
+        Ok(())
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
+#[tauri::command]
+fn pay_table_transaction(app_handle: AppHandle, table_id: i64, payment_method: &str, tip: i64) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &mut *conn {
+        // Obtener los detalles de la transacción de mesa
+        let mut stmt = conn
+            .prepare("SELECT id_producto, cantidad FROM Transacciones_de_mesa WHERE id_mesa = ?")
+            .map_err(|e| e.to_string())?;
+
+        let detalles: Vec<(i64, i64)> = stmt
+            .query_map([table_id], |row| {
+                Ok((row.get(0)?, row.get(1)?))
+            })
+            .map_err(|e| e.to_string())?
+            .map(|res| res.unwrap())
+            .collect();
+
+        // Calcular el total de la transacción
+        let mut total = 0;
+        for (id_producto, cantidad) in &detalles {
+            let precio: i64 = conn.query_row(
+                "SELECT precio_producto FROM Productos WHERE id_producto = ?",
+                params![id_producto],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+            total += precio * cantidad;
+        }
+
+        // Insertar la boleta (tipo "mesa" y número de mesa correspondiente)
+        conn.execute(
+            "INSERT INTO Boletas (fecha, metodo_pago, total, propina, tipo_pedido, numero_mesa) VALUES (?, ?, ?, ?, 'mesa', ?)",
+            params![get_timestamp(), payment_method, total, tip, table_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        let boleta_id = conn.last_insert_rowid();
+
+        // Insertar los detalles de la boleta
+        for (id_producto, cantidad) in detalles {
+            let precio: i64 = conn.query_row(
+                "SELECT precio_producto FROM Productos WHERE id_producto = ?",
+                params![id_producto],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+            conn.execute(
+                "INSERT INTO Detalle_Boleta (id_boleta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)",
+                params![boleta_id, id_producto, cantidad, precio],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
+        // Eliminar las transacciones de la mesa
+        conn.execute(
+            "DELETE FROM Transacciones_de_mesa WHERE id_mesa = ?",
+            params![table_id],
         )
         .map_err(|e| e.to_string())?;
 
@@ -375,105 +506,70 @@ fn add_credit_transaction(
 }
 
 #[tauri::command]
-fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_method: &str) -> Result<(), String> {
+fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_method: &str, tip: i64) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
     let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &mut *conn {
+        // Obtener la deuda fiada
         let (total_debt, current_paid): (i64, i64) = conn.query_row(
-            "SELECT monto_total, monto_pagado FROM Deudas_Fiado WHERE id_deuda = ?",
+            "SELECT total_venta, monto_pendiente FROM Transacciones_Fiado WHERE id_transaccion_fiado = ?",
             params![debt_id],
             |row| Ok((row.get(0)?, row.get(1)?)),
         )
         .map_err(|e| e.to_string())?;
 
-        let new_paid = current_paid + amount;
+        let new_paid = current_paid - amount;
 
-        if new_paid >= total_debt {
-            // Obtener las transacciones de la deuda
+        if new_paid <= 0 {
+            // Obtener los detalles de la transacción fiada
             let mut stmt = conn
-                .prepare("SELECT id_producto, cantidad, precio_unitario FROM Transacciones_Fiado WHERE id_deuda = ?")
+                .prepare("SELECT id_producto, cantidad, precio_unitario FROM Detalle_Transaccion_Fiado WHERE id_transaccion_fiado = ?")
                 .map_err(|e| e.to_string())?;
 
-            let transacciones: Vec<Product> = stmt
+            let detalles: Vec<(i64, i64, i64)> = stmt
                 .query_map([debt_id], |row| {
-                    Ok(Product {
-                        id_producto: row.get(0)?,
-                        nombre_producto: String::new(),
-                        id_categoria: 0,
-                        precio_producto: row.get(2)?,
-                    })
+                    Ok((row.get(0)?, row.get(1)?, row.get(2)?))
                 })
                 .map_err(|e| e.to_string())?
                 .map(|res| res.unwrap())
                 .collect();
 
-            // Calcular las cantidades de cada producto en la deuda
-            let mut product_quantities = HashMap::new();
-            for product in &transacciones {
-                *product_quantities.entry(product.id_producto).or_insert(0) += 1;
-            }
-
-            // Convertir el HashMap en un vector de structs Product
-            let cart: Result<Vec<Product>, String> = product_quantities
-                .iter()
-                .map(|(id_producto, _cantidad)| {
-                    // Buscar el producto en la tabla Productos
-                    conn.query_row(
-                        "SELECT id_producto, nombre_producto, id_categoria, precio_producto FROM Productos WHERE id_producto = ?",
-                        params![id_producto],
-                        |row| {
-                            Ok(Product {
-                                id_producto: row.get(0)?,
-                                nombre_producto: row.get(1)?,
-                                id_categoria: row.get(2)?,
-                                precio_producto: row.get(3)?,
-                            })
-                        },
-                    ).map_err(|e| e.to_string())
-                })
-                .collect();
-
-            let cart = cart?; // Desenvolver el Result y propagar el error
-
-            // Calcular el total de la compra
-            let total = calculate_total(&cart);
-
-            // Insertar la boleta
+            // Insertar la boleta, 'llevar' es el tipo de pedido por defecto, 0 es el número de mesa por defecto.
             conn.execute(
-                "INSERT INTO Boletas (fecha, metodo_pago, total) VALUES (?, ?, ?)",
-                params![get_timestamp(), payment_method, total],
+                "INSERT INTO Boletas (fecha, metodo_pago, total, propina, tipo_pedido, numero_mesa) VALUES (?, ?, ?, ?, 'llevar', 0)",
+                params![get_timestamp(), payment_method, total_debt, tip],
             )
             .map_err(|e| e.to_string())?;
 
             let boleta_id = conn.last_insert_rowid();
 
             // Insertar los detalles de la boleta
-            for product in cart {
+            for (id_producto, cantidad, precio_unitario) in detalles {
                 conn.execute(
                     "INSERT INTO Detalle_Boleta (id_boleta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)",
-                    params![boleta_id, product.id_producto, *product_quantities.get(&product.id_producto).unwrap(), product.precio_producto],
+                    params![boleta_id, id_producto, cantidad, precio_unitario],
                 )
                 .map_err(|e| e.to_string())?;
             }
 
-            // Eliminar las transacciones de la deuda
+            // Eliminar la transacción fiada y sus detalles
             conn.execute(
-                "DELETE FROM Transacciones_Fiado WHERE id_deuda = ?",
+                "DELETE FROM Detalle_Transaccion_Fiado WHERE id_transaccion_fiado = ?",
                 params![debt_id],
             )
             .map_err(|e| e.to_string())?;
 
-            // Eliminar la deuda fiada
             conn.execute(
-                "DELETE FROM Deudas_Fiado WHERE id_deuda = ?",
+                "DELETE FROM Transacciones_Fiado WHERE id_transaccion_fiado = ?",
                 params![debt_id],
             )
             .map_err(|e| e.to_string())?;
+
         } else {
-            // Actualizar el monto pagado si no se ha pagado la deuda completa
+            // Actualizar el monto pendiente si no se ha pagado la deuda completa
             conn.execute(
-                "UPDATE Deudas_Fiado SET monto_pagado = ? WHERE id_deuda = ?",
+                "UPDATE Transacciones_Fiado SET monto_pendiente = ? WHERE id_transaccion_fiado = ?",
                 params![new_paid, debt_id],
             )
             .map_err(|e| e.to_string())?;
@@ -485,26 +581,29 @@ fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_me
     }
 }
 
+
 #[tauri::command]
 fn add_check(
     app_handle: AppHandle,
     cart: Vec<Product>,
     payment_method: &str,
+    tip: i64,
+    table_id: i64,
 ) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
-    let mut conn = state
-        .db
-        .lock()
-        .expect("Error al obtener el bloqueo de la base de datos");
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &mut *conn {
         // Calcular el total de la compra
         let total = calculate_total(&cart);
 
+        // Determinar el tipo de pedido (0 para llevar, cualquier otro valor para mesa)
+        let tipo_pedido = if table_id == 0 { "llevar" } else { "mesa" };
+
         // Insertar la boleta
         conn.execute(
-            "INSERT INTO Boletas (fecha, metodo_pago, total) VALUES (?, ?, ?)",
-            params![get_timestamp(), payment_method, total],
+            "INSERT INTO Boletas (fecha, metodo_pago, total, propina, tipo_pedido, numero_mesa) VALUES (?, ?, ?, ?, ?, ?)",
+            params![get_timestamp(), payment_method, total, tip, tipo_pedido, table_id],
         )
         .map_err(|e| e.to_string())?;
 
@@ -515,6 +614,9 @@ fn add_check(
             *product_quantities.entry(product.id_producto).or_insert(0) += 1;
         }
 
+        // Clonar el HashMap antes de usarlo en el primer bucle
+        let product_quantities_clone = product_quantities.clone();
+
         for (product_id, quantity) in product_quantities {
             let product = cart.iter().find(|p| p.id_producto == product_id).unwrap();
             conn.execute(
@@ -522,6 +624,17 @@ fn add_check(
                 params![boleta_id, product_id, quantity, product.precio_producto],
             )
             .map_err(|e| e.to_string())?;
+        }
+
+        // Si es una transacción en mesa (table_id != 0), registrar en Transacciones_de_mesa
+        if table_id != 0 {
+            for (product_id, quantity) in product_quantities_clone { // Usar el clon aquí
+                conn.execute(
+                    "INSERT INTO Transacciones_de_mesa (id_mesa, id_producto, cantidad) VALUES (?, ?, ?)",
+                    params![table_id, product_id, quantity],
+                )
+                .map_err(|e| e.to_string())?;
+            }
         }
 
         Ok(())
@@ -595,10 +708,7 @@ fn get_checks(
     page_size: i32,
 ) -> Result<Vec<BoletaConDetalles>, String> {
     let state = app_handle.state::<AppState>();
-    let conn = state
-        .db
-        .lock()
-        .expect("Error al obtener el bloqueo de la base de datos");
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &*conn {
         let offset = (page - 1) * page_size;
@@ -608,6 +718,9 @@ fn get_checks(
                 B.fecha, 
                 B.metodo_pago, 
                 B.total,
+                B.propina, 
+                B.tipo_pedido, 
+                B.numero_mesa, 
                 DB.id_detalle_boleta,
                 DB.id_producto,
                 P.nombre_producto,
@@ -625,12 +738,11 @@ fn get_checks(
 
         let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
 
-        let mut boletas_map: std::collections::HashMap<i32, BoletaConDetalles> =
-            std::collections::HashMap::new();
+        let mut boletas_map: std::collections::HashMap<i64, BoletaConDetalles> = std::collections::HashMap::new();
 
         let boletas_iter = stmt
             .query_map([page_size, offset], |row| {
-                let id_boleta: i32 = row.get(0)?;
+                let id_boleta: i64 = row.get(0)?;
                 let boleta = boletas_map
                     .entry(id_boleta)
                     .or_insert_with(|| BoletaConDetalles {
@@ -638,16 +750,19 @@ fn get_checks(
                         fecha: row.get(1).expect("fecha"),
                         metodo_pago: row.get(2).expect("metodo_pago"),
                         total: row.get(3).expect("total"),
+                        propina: row.get(4).expect("propina"),
+                        tipo_pedido: row.get(5).expect("tipo_pedido"),
+                        numero_mesa: row.get(6).expect("numero_mesa"),
                         detalles: Vec::new(),
                     });
 
-                if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(4)? {
+                if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(7)? { // Corregido el índice a 7
                     boleta.detalles.push(DetalleBoleta {
                         id_detalle_boleta,
-                        id_producto: row.get(5)?,
-                        nombre_producto: row.get(6)?,
-                        cantidad: row.get(7)?,
-                        precio_unitario: row.get(8)?,
+                        id_producto: row.get(8)?, // Corregido el índice a 8
+                        nombre_producto: row.get(9)?, // Corregido el índice a 9
+                        cantidad: row.get(10)?, // Corregido el índice a 10
+                        precio_unitario: row.get(11)?, // Corregido el índice a 11
                     });
                 }
 
@@ -655,19 +770,19 @@ fn get_checks(
             })
             .map_err(|e| e.to_string())?;
 
-        // Collect the results into a vector of BoletaConDetalles
+        // Recolectar los resultados en un vector de BoletaConDetalles
         for result in boletas_iter {
             result.map_err(|e| e.to_string())?;
         }
 
-        let boletas: Vec<BoletaConDetalles> =
-            boletas_map.into_iter().map(|(_, boleta)| boleta).collect();
+        let boletas: Vec<BoletaConDetalles> = boletas_map.into_iter().map(|(_, boleta)| boleta).collect();
 
         Ok(boletas)
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
+
 
 #[tauri::command]
 fn get_total_checks_count(app_handle: AppHandle) -> Result<i32, String> {
@@ -912,42 +1027,44 @@ fn generate_final_report(
                 B.fecha, 
                 B.metodo_pago, 
                 B.total,
+                B.propina, 
+                B.tipo_pedido, 
+                B.numero_mesa,
                 DB.id_detalle_boleta,
                 DB.id_producto,
                 P.nombre_producto,
                 DB.cantidad,
                 DB.precio_unitario
-            FROM (
-                SELECT *
-                FROM Boletas
-                WHERE SUBSTR(fecha, 7, 2) || SUBSTR(fecha, 4, 2) || SUBSTR(fecha, 1, 2) = ?
-            ) AS B
+            FROM Boletas AS B
             LEFT JOIN Detalle_Boleta AS DB ON B.id_boleta = DB.id_boleta
-            LEFT JOIN Productos AS P ON DB.id_producto = P.id_producto;
+            LEFT JOIN Productos AS P ON DB.id_producto = P.id_producto
+            WHERE B.fecha = ?;
         ";
 
         let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
-        let fecha_formateada = format!("{}{}{}", &fecha_actual[6..8], &fecha_actual[3..5], &fecha_actual[0..2]);
 
         // Mapeo de resultados a BoletaConDetalles
-        let mut boletas_map: HashMap<i32, BoletaConDetalles> = HashMap::new();
-        let boletas_iter = stmt.query_map([fecha_formateada], |row| {
-            let id_boleta: i32 = row.get(0)?;
+        let mut boletas_map: HashMap<i64, BoletaConDetalles> = HashMap::new();
+        let boletas_iter = stmt.query_map([fecha_actual], |row| {
+            let id_boleta: i64 = row.get(0)?;
             let boleta = boletas_map.entry(id_boleta).or_insert_with(|| BoletaConDetalles {
                 id_boleta,
                 fecha: row.get(1).expect("fecha"),
                 metodo_pago: row.get(2).expect("metodo_pago"),
                 total: row.get(3).expect("total"),
+                propina: row.get(4).expect("propina"),
+                tipo_pedido: row.get(5).expect("tipo_pedido"),
+                numero_mesa: row.get(6).expect("numero_mesa"),
                 detalles: Vec::new(),
             });
 
-            if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(4)? {
+            if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(7)? {
                 boleta.detalles.push(DetalleBoleta {
                     id_detalle_boleta,
-                    id_producto: row.get(5)?,
-                    nombre_producto: row.get(6)?,
-                    cantidad: row.get(7)?,
-                    precio_unitario: row.get(8)?,
+                    id_producto: row.get(8)?,
+                    nombre_producto: row.get(9)?,
+                    cantidad: row.get(10)?,
+                    precio_unitario: row.get(11)?,
                 });
             }
 
@@ -960,14 +1077,14 @@ fn generate_final_report(
         let boletas: Vec<BoletaConDetalles> = boletas_map.into_values().collect();
 
         let mut writer = WriterBuilder::new()
-            .delimiter(b';') 
+            .delimiter(b';')
             .from_path(csv_path)
             .map_err(|e| e.to_string())?;
 
-
         // Escribir encabezados del CSV
         writer.write_record(&[
-            "ID Boleta", "Fecha", "Metodo de Pago", "Total", "ID Detalle", "ID Producto", "Nombre Producto", "Cantidad", "Precio Unitario"
+            "ID Boleta", "Fecha", "Metodo de Pago", "Total", "Propina", "Tipo Pedido", "Número Mesa", 
+            "ID Detalle", "ID Producto", "Nombre Producto", "Cantidad", "Precio Unitario"
         ]).map_err(|e| e.to_string())?;
 
         // Escribir detalles de las boletas
@@ -978,6 +1095,9 @@ fn generate_final_report(
                     boleta.fecha.clone(),
                     boleta.metodo_pago.clone(),
                     boleta.total.to_string(),
+                    boleta.propina.to_string(),
+                    boleta.tipo_pedido.clone(),
+                    boleta.numero_mesa.to_string(),
                     detalle.id_detalle_boleta.to_string(),
                     detalle.id_producto.to_string(),
                     detalle.nombre_producto.clone(),
@@ -1033,6 +1153,7 @@ fn generate_final_report(
     }
 }
 
+
 fn calculate_total(cart: &[Product]) -> i32 {
     cart.iter().map(|item| item.precio_producto).sum()
 }
@@ -1057,6 +1178,9 @@ fn main() {
             update_category,
             add_product,
             update_product,
+            add_table,
+            add_table_transaction,
+            pay_table_transaction,
             add_client,
             update_client,
             add_credit_transaction,
