@@ -34,15 +34,15 @@ function AddClientModal({ closeClientModal, fetchData, isEditing, currentClient 
           nuevoNombre: clientName,
         });
       } else {
-        await invoke('add_client', { nombre: clientName });
+        await invoke('add_client', { nombreCliente: clientName });
       }
 
       fetchData();
     } catch (error) {
       setError('Error al guardar el cliente');
+      return;
     }
     closeClientModal();
-    setIsEditing(false);
   };
 
   return (
