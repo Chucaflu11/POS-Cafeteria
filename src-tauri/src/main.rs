@@ -126,18 +126,29 @@ pub fn create_database_schema(conn: &Connection) -> Result<(), rusqlite::Error> 
             nombre_cliente TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS Deudas_Fiado (
+            id_deuda INTEGER PRIMARY KEY,
+            id_cliente INTEGER,
+            fecha_inicio TEXT,
+            monto_total INTEGER,
+            monto_pagado INTEGER DEFAULT 0,
+            FOREIGN KEY (id_cliente) REFERENCES Clientes_Fiados(id_cliente)
+        );
+
         CREATE TABLE IF NOT EXISTS Transacciones_Fiado (
             id_transaccion_fiado INTEGER PRIMARY KEY,
-            id_cliente INTEGER,
-            fecha_venta INTEGER,
+            id_deuda INTEGER,
+            id_producto INTEGER,
             cantidad INTEGER,
-            monto_pendiente INTEGER,
-            FOREIGN KEY (id_cliente) REFERENCES Clientes_Fiados(id_cliente)
+            fecha_venta TEXT,
+            precio_unitario INTEGER,
+            FOREIGN KEY (id_deuda) REFERENCES Deudas_Fiado(id_deuda),
+            FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
         );
 
         CREATE TABLE IF NOT EXISTS Boletas (
             id_boleta INTEGER PRIMARY KEY,
-            fecha INTEGER,
+            fecha TEXT,
             metodo_pago TEXT,
             total INTEGER,
             propina INTEGER,
@@ -513,21 +524,21 @@ fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_me
     if let Some(conn) = &mut *conn {
         // Obtener la deuda fiada
         let (total_debt, current_paid): (i64, i64) = conn.query_row(
-            "SELECT total_venta, monto_pendiente FROM Transacciones_Fiado WHERE id_transaccion_fiado = ?",
+            "SELECT monto_total, monto_pagado FROM Deudas_Fiado WHERE id_deuda = ?",
             params![debt_id],
             |row| Ok((row.get(0)?, row.get(1)?)),
         )
         .map_err(|e| e.to_string())?;
 
-        let new_paid = current_paid - amount;
+        let new_paid = current_paid + amount;
 
-        if new_paid <= 0 {
-            // Obtener los detalles de la transacción fiada
+        if new_paid >= total_debt {
+            // Obtener las transacciones de la deuda
             let mut stmt = conn
-                .prepare("SELECT id_producto, cantidad, precio_unitario FROM Detalle_Transaccion_Fiado WHERE id_transaccion_fiado = ?")
+                .prepare("SELECT id_producto, cantidad, precio_unitario FROM Transacciones_Fiado WHERE id_deuda = ?")
                 .map_err(|e| e.to_string())?;
 
-            let detalles: Vec<(i64, i64, i64)> = stmt
+            let transacciones: Vec<(i64, i64, i64)> = stmt
                 .query_map([debt_id], |row| {
                     Ok((row.get(0)?, row.get(1)?, row.get(2)?))
                 })
@@ -535,17 +546,17 @@ fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_me
                 .map(|res| res.unwrap())
                 .collect();
 
-            // Insertar la boleta, 'llevar' es el tipo de pedido por defecto, 0 es el número de mesa por defecto.
+            // Insertar la boleta (tipo "llevar" y número de mesa 0 por defecto)
             conn.execute(
-                "INSERT INTO Boletas (fecha, metodo_pago, total, propina, tipo_pedido, numero_mesa) VALUES (?, ?, ?, ?, 'llevar', 0)",
-                params![get_timestamp(), payment_method, total_debt, tip],
+                "INSERT INTO Boletas (fecha, metodo_pago, total, propina, tipo_pedido, numero_mesa) VALUES (?, ?, ?, ?, ?, ?)",
+                params![get_timestamp(), payment_method, total_debt, tip, "llevar", 0],
             )
             .map_err(|e| e.to_string())?;
 
             let boleta_id = conn.last_insert_rowid();
 
             // Insertar los detalles de la boleta
-            for (id_producto, cantidad, precio_unitario) in detalles {
+            for (id_producto, cantidad, precio_unitario) in transacciones {
                 conn.execute(
                     "INSERT INTO Detalle_Boleta (id_boleta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)",
                     params![boleta_id, id_producto, cantidad, precio_unitario],
@@ -553,23 +564,22 @@ fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_me
                 .map_err(|e| e.to_string())?;
             }
 
-            // Eliminar la transacción fiada y sus detalles
+            // Eliminar las transacciones de la deuda y la deuda misma
             conn.execute(
-                "DELETE FROM Detalle_Transaccion_Fiado WHERE id_transaccion_fiado = ?",
+                "DELETE FROM Transacciones_Fiado WHERE id_deuda = ?",
                 params![debt_id],
             )
             .map_err(|e| e.to_string())?;
 
             conn.execute(
-                "DELETE FROM Transacciones_Fiado WHERE id_transaccion_fiado = ?",
+                "DELETE FROM Deudas_Fiado WHERE id_deuda = ?",
                 params![debt_id],
             )
             .map_err(|e| e.to_string())?;
-
         } else {
-            // Actualizar el monto pendiente si no se ha pagado la deuda completa
+            // Actualizar el monto pagado si no se ha pagado la deuda completa
             conn.execute(
-                "UPDATE Transacciones_Fiado SET monto_pendiente = ? WHERE id_transaccion_fiado = ?",
+                "UPDATE Deudas_Fiado SET monto_pagado = ? WHERE id_deuda = ?",
                 params![new_paid, debt_id],
             )
             .map_err(|e| e.to_string())?;
@@ -580,6 +590,7 @@ fn pay_partial_debt(app_handle: AppHandle, debt_id: i64, amount: i64, payment_me
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
+
 
 
 #[tauri::command]
@@ -812,13 +823,11 @@ fn get_fiado_data(
     page_size: i32,
 ) -> Result<Vec<ClientFiadoData>, String> {
     let state = app_handle.state::<AppState>();
-    let conn = state
-        .db
-        .lock()
-        .expect("Error al obtener el bloqueo de la base de datos");
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &*conn {
         let offset = (page - 1) * page_size;
+
         let query = "
             SELECT
                 cf.id_cliente,
@@ -830,7 +839,7 @@ fn get_fiado_data(
                 p.nombre_producto,
                 tf.precio_unitario,
                 tf.cantidad,
-                tf.fecha_venta
+                df.fecha_inicio -- Cambiado a df.fecha_inicio
             FROM (
                 SELECT *
                 FROM Clientes_Fiados
@@ -839,51 +848,50 @@ fn get_fiado_data(
             LEFT JOIN Deudas_Fiado df ON cf.id_cliente = df.id_cliente
             LEFT JOIN Transacciones_Fiado tf ON df.id_deuda = tf.id_deuda
             LEFT JOIN Productos p ON tf.id_producto = p.id_producto
-            ORDER BY cf.id_cliente ASC, tf.fecha_venta DESC; 
+            ORDER BY cf.id_cliente ASC, df.fecha_inicio DESC; 
         ";
 
         let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
 
         let mut fiado_data_map: HashMap<i32, ClientFiadoData> = HashMap::new();
 
-        let rows = stmt
-            .query_map([page_size, offset], |row| {
-                let client_id: i32 = row.get(0)?;
-                let client_name: String = row.get(1)?;
-                let debt_id: Option<i32> = row.get(2)?;
-                let total_debt: i32 = row.get(3).unwrap_or(0);
-                let amount_paid: i32 = row.get(4).unwrap_or(0);
-                let product_id: Option<i32> = row.get(5)?;
-                let product_name: Option<String> = row.get(6)?;
-                let product_price: Option<i32> = row.get(7)?;
-                let quantity: Option<i32> = row.get(8)?;
-                let transaction_date: Option<String> = row.get(9)?;
+        let rows = stmt.query_map([page_size, offset], |row| {
+            let client_id: i32 = row.get(0)?;
+            let client_name: String = row.get(1)?;
+            let debt_id: Option<i32> = row.get(2)?;
+            let total_debt: i32 = row.get(3).unwrap_or(0);
+            let amount_paid: i32 = row.get(4).unwrap_or(0);
+            let product_id: Option<i32> = row.get(5)?;
+            let product_name: Option<String> = row.get(6)?;
+            let product_price: Option<i32> = row.get(7)?;
+            let quantity: Option<i32> = row.get(8)?;
+            let transaction_date: Option<String> = row.get(9)?; // Fecha de inicio de la deuda
 
-                let remaining_debt = total_debt - amount_paid;
+            let remaining_debt = total_debt - amount_paid;
 
-                fiado_data_map
-                    .entry(client_id)
-                    .or_insert_with(|| ClientFiadoData {
-                        client_id,
-                        client_name: client_name.clone(),
-                        debt_id,
-                        total_debt,
-                        amount_paid,
-                        remaining_debt,
-                        products: vec![],
-                    })
-                    .products
-                    .push(ProductFiadoData {
-                        product_id: product_id.unwrap_or(0),
-                        product_name: product_name.unwrap_or_default(),
-                        product_price: product_price.unwrap_or(0),
-                        quantity: quantity.unwrap_or(0),
-                        transaction_date: transaction_date.unwrap_or_default(),
-                    });
+            fiado_data_map
+                .entry(client_id)
+                .or_insert_with(|| ClientFiadoData {
+                    client_id,
+                    client_name: client_name.clone(),
+                    debt_id,
+                    total_debt,
+                    amount_paid,
+                    remaining_debt,
+                    products: vec![],
+                })
+                .products
+                .push(ProductFiadoData {
+                    product_id: product_id.unwrap_or(0),
+                    product_name: product_name.unwrap_or_default(),
+                    product_price: product_price.unwrap_or(0),
+                    quantity: quantity.unwrap_or(0),
+                    transaction_date: transaction_date.unwrap_or_default(),
+                });
 
-                Ok(())
-            })
-            .map_err(|e| e.to_string())?;
+            Ok(())
+        })
+        .map_err(|e| e.to_string())?;
 
         // Consumir el iterador para ejecutar la consulta
         for _ in rows {}
@@ -896,6 +904,7 @@ fn get_fiado_data(
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
+
 
 #[tauri::command]
 fn get_clientes_fiados_count(app_handle: AppHandle) -> Result<i32, String> {

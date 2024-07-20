@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { invoke } from "@tauri-apps/api/tauri";
 
 import '../../styles/fiados/ClientPaymentModal.css'
 
-function ClientPaymentModal({ closeClientPaymentModal, debtId, fetchData }) {
+function ClientPaymentModal({ closeClientPaymentModal, debtId, totalDebt, remainingDebt, fetchData }) {
     const [partialPayment, setPartialPayment] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('efectivo');
     const [error, setError] = useState('');
+    const [tip, setTip] = useState(0);
 
     const handleInputChange = (event) => {
         setPartialPayment(event.target.value);
@@ -15,6 +16,23 @@ function ClientPaymentModal({ closeClientPaymentModal, debtId, fetchData }) {
 
     const handlePaymentMethodChange = (event) => {
         setPaymentMethod(event.target.value);
+    };
+
+    useEffect(() => {
+        if(partialPayment >= remainingDebt){
+            setTip(parseInt(totalDebt) * 0.1);
+        } else {
+            setTip(0);
+        }
+      }, [partialPayment, remainingDebt, totalDebt]);
+
+    const handleTipChange = (event) => {
+        const tipAmount = parseInt(event.target.value);
+        if (!isNaN(tipAmount)) {
+          setTip(tipAmount);
+        } else {
+          setTip(0);
+        }
     };
 
     const partialPay= (event) => {
@@ -26,7 +44,7 @@ function ClientPaymentModal({ closeClientPaymentModal, debtId, fetchData }) {
         }
         try {
             let amountPaid = parseInt(partialPayment);
-            const pay = invoke('pay_partial_debt', { debtId: debtId, amount: amountPaid, paymentMethod: paymentMethod });
+            const pay = invoke('pay_partial_debt', { debtId: debtId, amount: amountPaid, paymentMethod: paymentMethod, tip: tip });
             fetchData();
         } catch (error) {
             console.error('Error al obtener datos de la base de datos:', error);
@@ -57,6 +75,10 @@ function ClientPaymentModal({ closeClientPaymentModal, debtId, fetchData }) {
                             <option value="efectivo">Efectivo</option>
                             <option value="tarjeta">Tarjeta</option>
                         </select>
+                    </div>
+                    <div className='tip-container'>
+                        <label>Propina:</label>
+                        <input className='tip-input' type="number" name="tip" value={tip} onChange={handleTipChange} placeholder="Propina" />
                     </div>
                     {error && <p style={{ color: 'red' }}>{error}</p>}
                     <div className='send-button-container'>
