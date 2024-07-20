@@ -32,6 +32,19 @@
     cursor: pointer;
 }
 
+.tables-route-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}  
+
+.tables-icon {
+    height: 2.5em;
+    width: 2.5em;
+    color: white;
+    fill: currentColor;
+}
+
 .report-route-button {
     background: none;
     border: none;

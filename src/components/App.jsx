@@ -12,6 +12,8 @@ import Clientes from './fiados/Clientes';
 
 import Report from './Reports/Report';
 
+import Tables from './Tables/Tables';
+
 import { invoke } from '@tauri-apps/api/tauri';
 
 import '../styles/App.css'
@@ -93,6 +95,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clients" element={<Clientes />} />
           <Route path="/report" element={<Report />} />
+          <Route path="/tables" element={<Tables />} />
         </Routes>
       </div>
     </Router>
