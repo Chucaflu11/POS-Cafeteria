@@ -62,6 +62,20 @@
     color: var(--placeholder-color);
 }
 
+.tip-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.tip {
+    width: 15vw;
+    height: 2rem;
+    padding-left: 0.5rem;
+    border: 1px solid var(--text-color);
+    border-radius: 0.5rem;
+
+}
+
 .send-payment-button {
     color: white;
     background-color: #A63E26 !important;

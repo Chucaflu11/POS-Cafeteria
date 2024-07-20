@@ -28,10 +28,10 @@ struct BoletaConDetalles {
     id_boleta: i64,
     fecha: String,
     metodo_pago: String,
-    total: i64,
-    propina: i64, // Nuevo campo para la propina
-    tipo_pedido: String, // Nuevo campo para el tipo de pedido
-    numero_mesa: i64, // Nuevo campo para el número de mesa
+    total: i32,
+    propina: i32,
+    tipo_pedido: String,
+    numero_mesa: i32,
     detalles: Vec<DetalleBoleta>,
 }
 
@@ -300,7 +300,7 @@ fn add_table(app_handle: AppHandle, nombre_mesa: &str) -> Result<i32, String> {
 }
 
 #[tauri::command]
-fn add_table_transaction(app_handle: AppHandle, table_id: i64, cart: Vec<Product>) -> Result<(), String> {
+fn add_table_transaction(app_handle: AppHandle, table_id: i32, cart: Vec<Product>) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
     let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
@@ -333,7 +333,7 @@ fn add_table_transaction(app_handle: AppHandle, table_id: i64, cart: Vec<Product
 }
 
 #[tauri::command]
-fn pay_table_transaction(app_handle: AppHandle, table_id: i64, payment_method: &str, tip: i64) -> Result<(), String> {
+fn pay_table_transaction(app_handle: AppHandle, table_id: i32, payment_method: &str, tip: i32) -> Result<(), String> {
     let state = app_handle.state::<AppState>();
     let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
@@ -343,7 +343,7 @@ fn pay_table_transaction(app_handle: AppHandle, table_id: i64, payment_method: &
             .prepare("SELECT id_producto, cantidad FROM Transacciones_de_mesa WHERE id_mesa = ?")
             .map_err(|e| e.to_string())?;
 
-        let detalles: Vec<(i64, i64)> = stmt
+        let detalles: Vec<(i32, i32)> = stmt
             .query_map([table_id], |row| {
                 Ok((row.get(0)?, row.get(1)?))
             })
@@ -354,7 +354,7 @@ fn pay_table_transaction(app_handle: AppHandle, table_id: i64, payment_method: &
         // Calcular el total de la transacción
         let mut total = 0;
         for (id_producto, cantidad) in &detalles {
-            let precio: i64 = conn.query_row(
+            let precio: i32 = conn.query_row(
                 "SELECT precio_producto FROM Productos WHERE id_producto = ?",
                 params![id_producto],
                 |row| row.get(0),
@@ -374,7 +374,7 @@ fn pay_table_transaction(app_handle: AppHandle, table_id: i64, payment_method: &
 
         // Insertar los detalles de la boleta
         for (id_producto, cantidad) in detalles {
-            let precio: i64 = conn.query_row(
+            let precio: i32 = conn.query_row(
                 "SELECT precio_producto FROM Productos WHERE id_producto = ?",
                 params![id_producto],
                 |row| row.get(0),
