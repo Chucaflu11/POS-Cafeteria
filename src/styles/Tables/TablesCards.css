@@ -1,0 +1,66 @@
+.tables-cards {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    margin-top: 2rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.tables-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.tables-details {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+}
+
+.tables-content-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+}
+
+.tables-card-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.2rem;
+}
+
+.tables-card-buttons button {
+    background-color: var(--text-color-fourth);
+    color: var(--text-color-secondary);
+    border: none;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.tables-card-pay-button {
+    background-color: red !important;
+    color: var(--text-color-secondary);
+    border: none;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.tables-products-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tables-products-list {
+    list-style: none;
+}

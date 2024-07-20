@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 import { invoke } from '@tauri-apps/api';
 
+import TablesCards from './tablesCards';
+
 import '../../styles/Tables/Tables.css';
 
 function Tables() {
@@ -14,13 +16,12 @@ function Tables() {
     const renderCard = (mesaNumber) => {
       if (activeCard === mesaNumber) {
         return (
-          <div className="table-card">
-            <h2>Mesa {mesaNumber}</h2>
-          </div>
+            <TablesCards table={mesaNumber} />
         );
       }
       return null;
     };
+    
   
     return (
         <div className="tables-content">
@@ -29,7 +30,7 @@ function Tables() {
                 {[...Array(10)].map((_, index) => (
                     <li key={index} className="buttons-list-li">
                     <button
-                        className={activeCard === index + 1 ? 'active' : ''} // Clase 'active' si está seleccionado
+                        className={activeCard === index + 1 ? 'active' : ''}
                         onClick={() => handleButtonClick(index + 1)}
                     >
                         Mesa {index + 1}
