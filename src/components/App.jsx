@@ -12,7 +12,7 @@ import Clientes from './fiados/Clientes';
 
 import Report from './Reports/Report';
 
-import Tables from './Tables/Tables';
+import Tables from './tables/tables';
 
 import { invoke } from '@tauri-apps/api/tauri';
 
@@ -31,6 +31,16 @@ function App() {
     setTheme(theme === 'light-theme' ? 'dark-theme' : 'light-theme');
   };
 
+  const setupTables = async () => {
+    try {
+      for (let i = 0; i < 10; i++) {
+        await invoke('add_table', { nombreMesa: 'Mesa ' + (i + 1) });
+      }
+    } catch (error) {
+      return;
+    }
+  };
+
   async function fetchData() {
     try {
       const categoriesData = await invoke('get_categories');
@@ -38,6 +48,8 @@ function App() {
 
       const productsData = await invoke('get_products');
       setProducts(productsData);
+
+      setupTables();
 
       if (categoriesData.length > 0) {
         setSelectedCategory(categoriesData[0]);

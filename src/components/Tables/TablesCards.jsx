@@ -1,71 +1,47 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../../styles/Tables/TablesCards.css';
+
+import AddTableProductsModal from './AddTableProductsModal.jsx';
+import TablePaymentModal from './TablePaymentModal.jsx';
+
 import { invoke } from '@tauri-apps/api';
 
-function TablesCards({ table }) {
+function TablesCards({ table, tableName, fetchData, tableId }) {
+    const [isTableProductsModalOpen, setIsTableProductsModalOpen] = useState(false);
+    const [isTablePaymentModalOpen, setIsTablePaymentModalOpen] = useState(false);
+
+    const openTableProductsModal = () => {
+        setIsTableProductsModalOpen(true);
+    };
+
+    const closeTableProductsModal = () => {
+        setIsTableProductsModalOpen(false);
+    };
     
-    // mock data
-    const tableData = {
-        "mesa": {
-            "id_mesa": 1,
-            "nombre_mesa": "Mesa 1",
-            "transacciones": [
-                {
-                    "id_transaccion_mesa": 1,
-                    "id_producto": 101,
-                    "cantidad": 2,
-                    "producto": {
-                        "nombre_producto": "Producto 1",
-                        "precio_producto": 100,
-                        "id_categoria": 1,
-                        "activo": true
-                    }
-                },
-                {
-                    "id_transaccion_mesa": 2,
-                    "id_producto": 102,
-                    "cantidad": 1,
-                    "producto": {
-                        "nombre_producto": "Producto 2",
-                        "precio_producto": 150,
-                        "id_categoria": 2,
-                        "activo": false
-                    }
-                },
-                {
-                    "id_transaccion_mesa": 3,
-                    "id_producto": 103,
-                    "cantidad": 3,
-                    "producto": {
-                        "nombre_producto": "Producto 3",
-                        "precio_producto": 200,
-                        "id_categoria": 1,
-                        "activo": true
-                    }
-                }
-            ]
-        }
+    const openTablePaymentModal = () => {
+        setIsTablePaymentModalOpen(true);
     };
 
-    const calculateTotal = (transacciones) => {
-        return transacciones.reduce((total, transaccion) => total + transaccion.cantidad * transaccion.producto.precio_producto, 0);
+    const closeTablePaymentModal = () => {
+        setIsTablePaymentModalOpen(false);
     };
-
-    const total = calculateTotal(tableData.mesa.transacciones);
 
     return (
         <div className="tables-cards">
                 <div className="tables-header">
                     <div className='tables-details' >
-                        <h3>{tableData.mesa.nombre_mesa}</h3>
-                        <p>TOTAL  ${total}</p>
+                        <h3>{tableName}</h3>
+                        <p>TOTAL  ${table.total}</p>
                     </div>
                     <div className="tables-content-buttons">
 
                         <div className="tables-card-buttons">
-                            <button>
+                            <button onClick={openTableProductsModal}>
                                 Agregar
                             </button>
+                            {isTableProductsModalOpen && (
+                                <AddTableProductsModal closeTableProductsModal={closeTableProductsModal} fetchData={fetchData} tableId={tableId} />
+                            )}
                             
                             <button>
                                 Cocina Ticket
@@ -75,17 +51,20 @@ function TablesCards({ table }) {
                                 Garzón Ticket
                             </button>
                             </div>
-                            <button className="tables-card-pay-button">
+                            <button className="tables-card-pay-button" onClick={openTablePaymentModal}>
                                 Pagar
                             </button>
+                            {isTablePaymentModalOpen && (
+                                <TablePaymentModal closeTablePaymentModal={closeTablePaymentModal} tableId={tableId} totalTable={table.total} fetchData={fetchData} />
+                            )}
                     </div>
                 </div>
 
                 <div className="tables-products-details">
-                    <ul className='tables-products-list'>
-                        {tableData.mesa.transacciones.map((transaccion, index) => (
-                            <li key={`${transaccion.id_transaccion_mesa}-${index}`}>
-                                {transaccion.producto.nombre_producto} - ${transaccion.producto.precio_producto} x {transaccion.cantidad}
+                    <ul className="tables-products-list">
+                        {table.products.map((product, index) => (
+                            <li key={`${product.id_producto}-${product.nombre_producto}-${index}`}>
+                                {product.nombre_producto} - ${product.precio_producto}
                             </li>
                         ))}
                     </ul>

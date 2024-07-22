@@ -56,6 +56,12 @@ struct ClientFiadoData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct TableData {
+    products: Vec<Product>,
+    total: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct ProductFiadoData {
     product_id: i32,
     product_name: String,
@@ -291,20 +297,31 @@ fn update_product(
 #[tauri::command]
 fn add_table(app_handle: AppHandle, nombre_mesa: &str) -> Result<i32, String> {
     let state = app_handle.state::<AppState>();
-    let mut conn = state
-        .db
-        .lock()
-        .expect("Error al obtener el bloqueo de la base de datos");
+    let mut conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
 
     if let Some(conn) = &mut *conn {
+        // Verificar si la mesa ya existe
+        let mesa_existe: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM Mesas WHERE nombre_mesa = ?)",
+                params![nombre_mesa],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+
+        if mesa_existe {
+            return Err("Ya existe una mesa con ese nombre".to_string());
+        }
+
+        // Insertar la mesa si no existe
         conn.execute(
             "INSERT INTO Mesas (nombre_mesa) VALUES (?)",
             params![nombre_mesa],
         )
         .map_err(|e| e.to_string())?;
 
-        let id_cliente = conn.last_insert_rowid() as i32;
-        Ok(id_cliente)
+        let id_mesa = conn.last_insert_rowid() as i32;
+        Ok(id_mesa)
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
@@ -410,6 +427,65 @@ fn pay_table_transaction(app_handle: AppHandle, table_id: i32, payment_method: &
         Err("No se pudo obtener la conexión a la base de datos".to_string())
     }
 }
+
+#[tauri::command]
+fn get_table_data(app_handle: AppHandle, table_id: i64) -> Result<TableData, String> {
+    let state = app_handle.state::<AppState>();
+    let conn = state.db.lock().expect("Error al obtener el bloqueo de la base de datos");
+
+    if let Some(conn) = &*conn {
+        let query = "
+            SELECT 
+                P.id_producto,
+                P.nombre_producto,
+                P.precio_producto,
+                TM.cantidad
+            FROM Transacciones_de_mesa TM
+            JOIN Productos P ON TM.id_producto = P.id_producto
+            WHERE TM.id_mesa = ?;
+        ";
+
+        let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
+
+        let products_iter = stmt.query_map([table_id], |row| {
+            Ok(Product {
+                id_producto: row.get(0)?,
+                nombre_producto: row.get(1)?,
+                precio_producto: row.get(2)?,
+                id_categoria: 0, // No se usa en este caso, pero es requerido por la struct Product
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+        let products: Vec<Product> = products_iter
+            .map(|res| res.unwrap())  
+            .collect();
+
+        let total: i32 = products.iter().map(|p| p.precio_producto).sum();
+
+        // Si no hay productos, devuelve valores por defecto
+        if products.is_empty() {
+            let table_data = TableData {
+                products: vec![
+                    Product {
+                        id_producto: 0,
+                        nombre_producto: "No hay productos".to_string(),
+                        precio_producto: 0,
+                        id_categoria: 0,
+                    }
+                ],
+                total: 0,
+            };
+            return Ok(table_data);
+        }
+
+        let table_data = TableData { products, total };
+        Ok(table_data)
+    } else {
+        Err("No se pudo obtener la conexión a la base de datos".to_string())
+    }
+}
+
 
 
 #[tauri::command]
@@ -678,7 +754,7 @@ fn get_products(app_handle: AppHandle) -> Result<Vec<Product>, String> {
             .map_err(|e| e.to_string())?;
 
         // Recolecta los resultados en un Vec<Product>
-        let products: Vec<Product> = products_iter.map(|row| row.unwrap()).collect(); // Maneja el error aquí
+        let products: Vec<Product> = products_iter.map(|row| row.unwrap()).collect();
         Ok(products)
     } else {
         Err("No se pudo obtener la conexión a la base de datos".to_string())
@@ -770,10 +846,10 @@ fn get_checks(
                 if let Some(id_detalle_boleta) = row.get::<_, Option<i32>>(7)? { // Corregido el índice a 7
                     boleta.detalles.push(DetalleBoleta {
                         id_detalle_boleta,
-                        id_producto: row.get(8)?, // Corregido el índice a 8
-                        nombre_producto: row.get(9)?, // Corregido el índice a 9
-                        cantidad: row.get(10)?, // Corregido el índice a 10
-                        precio_unitario: row.get(11)?, // Corregido el índice a 11
+                        id_producto: row.get(8)?,
+                        nombre_producto: row.get(9)?,
+                        cantidad: row.get(10)?,
+                        precio_unitario: row.get(11)?,
                     });
                 }
 
@@ -839,7 +915,7 @@ fn get_fiado_data(
                 p.nombre_producto,
                 tf.precio_unitario,
                 tf.cantidad,
-                df.fecha_inicio -- Cambiado a df.fecha_inicio
+                df.fecha_inicio
             FROM (
                 SELECT *
                 FROM Clientes_Fiados
@@ -1190,6 +1266,7 @@ fn main() {
             add_table,
             add_table_transaction,
             pay_table_transaction,
+            get_table_data,
             add_client,
             update_client,
             add_credit_transaction,

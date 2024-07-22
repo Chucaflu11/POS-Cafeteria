@@ -8,15 +8,35 @@ import '../../styles/Tables/Tables.css';
 
 function Tables() {
     const [activeCard, setActiveCard] = useState(null);
+    const [tableData, setTableData] = useState(null);
+
 
     const handleButtonClick = (mesaNumber) => {
       setActiveCard(activeCard === mesaNumber ? null : mesaNumber);
     };
+
+    const fetchData = () => {
+      invoke('get_table_data', { tableId: activeCard })
+          .then(setTableData)
+          .catch((error) => {
+            console.error('Error al obtener los datos de la mesa:', error);
+          });
+    }
+
+    useEffect(() => {
+      if (activeCard) {
+        fetchData();
+      } else {
+        setTableData(null);
+      }
+    }, [activeCard]);
+
+    
   
     const renderCard = (mesaNumber) => {
-      if (activeCard === mesaNumber) {
+      if (activeCard === mesaNumber && tableData) {
         return (
-            <TablesCards table={mesaNumber} />
+          <TablesCards table={tableData} tableName={`Mesa ${mesaNumber}`} fetchData={fetchData} tableId={mesaNumber} />
         );
       }
       return null;
@@ -39,8 +59,7 @@ function Tables() {
                 ))}
             </ul>
           </div>
-
-          {[...Array(10)].map((_, index) => renderCard(index + 1))}
+          {activeCard && renderCard(activeCard)}
         </div>
       );
 }
