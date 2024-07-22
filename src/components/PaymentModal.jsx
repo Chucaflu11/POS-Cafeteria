@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 
 import '../styles/PaymentModal.css';
@@ -7,10 +7,15 @@ function PaymentModal({ cart, setCart, closePayment }) {
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cashPaid, setCashPaid] = useState('');
   const [changeDue, setChangeDue] = useState(0);
+  const [tip, setTip] = useState(0);
 
   const [error, setError] = useState('');
 
   const total = cart.reduce((acc, item) => acc + item.precio_producto, 0);
+
+  useEffect(() => {
+    setTip(total * 0.1);
+  }, [total]);
 
   const handlePaymentMethodChange = (event) => {
     setPaymentMethod(event.target.value);
@@ -30,6 +35,15 @@ function PaymentModal({ cart, setCart, closePayment }) {
     }
   };
 
+  const handleTipChange = (event) => {
+    const tipAmount = parseInt(event.target.value);
+    if (!isNaN(tipAmount)) {
+      setTip(tipAmount);
+    } else {
+      setTip(0);
+    }
+  };
+
   const handleCompleteTransaction = async () => {
     if (cart.length === 0) {
       setError('El carrito está vacío');
@@ -45,11 +59,11 @@ function PaymentModal({ cart, setCart, closePayment }) {
       return;
     }
     try {
-      await invoke('add_check', { cart, paymentMethod });
+      await invoke('add_check', { cart, paymentMethod, tip, tableId: 0 });
       setCart([]);
       closePayment();
     } catch (error) {
-      setError('Error al completar la transacción');
+      setError('Error al completar la transacción: ' + error);
     }
   };
 
@@ -64,10 +78,14 @@ function PaymentModal({ cart, setCart, closePayment }) {
             <option value="tarjeta">Tarjeta</option>
           </select>
         </div>
+        <div className='tip-container'>
+          <label> Propina: </label>
+        <input type="number" className="tip" pattern="[0-9]*" value={tip} onChange={handleTipChange} placeholder={'Propina' + tip} />
+        </div>
         {paymentMethod === 'efectivo' && (
           <div>
             <input type="number" className="cashPaid" pattern="[0-9]*" value={cashPaid} onChange={handleCashPaidChange} placeholder='Efectivo recibido' />
-            <p>Vuelto: {changeDue.toLocaleString()}</p>
+             <p>Vuelto: {changeDue.toLocaleString()}</p>
           </div>
         )}
         {error && <p style={{ color: 'red' }}>{error}</p>}

@@ -61,6 +61,21 @@
     border-radius: 0.5rem;
 }
 
+.tip-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
+}
+
+.tip-input {
+    width: 95%;
+    height: 2rem;
+    padding-left: 0.5rem;
+    border: 1px solid var(--text-color);
+    border-radius: 0.5rem;
+
+}
+
 .send-button-container {
     display: flex;
     flex-direction: row;

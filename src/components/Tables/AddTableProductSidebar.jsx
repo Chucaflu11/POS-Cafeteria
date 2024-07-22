@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 
 import { invoke } from "@tauri-apps/api/tauri";
 
-import '../../styles/fiados/AddClientProductSidebar.css';
+import '../../styles/Tables/AddTableProductSidebar.css';
 
-function AddClientProductSidebar({ cart, setCart, clientId, closeClientProductsModal, fetchData }) {
+function AddTableProductsSidebar({ cart, setCart, tableId, closeTableProductsModal, fetchData }) {
   const total = cart.reduce((acc, item) => acc + item.precio_producto, 0);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -18,14 +18,14 @@ function AddClientProductSidebar({ cart, setCart, clientId, closeClientProductsM
     setCart(newCart);
   };
 
-  async function addCreditTransaction(clientId) {
+  async function addTableTransaction(tableId) {
     try {
-        const response = await invoke('add_credit_transaction', {
+        const response = await invoke('add_table_transaction', {
+            tableId,
             cart,
-            clientId
         });
         fetchData();
-        closeClientProductsModal();
+        closeTableProductsModal();
         return response;
     } catch (error) {
         console.error('Error al agregar transacción de crédito:', error);
@@ -91,9 +91,9 @@ function AddClientProductSidebar({ cart, setCart, clientId, closeClientProductsM
           <span>${total}</span>
         </div>
       </div>
-      <button className='pay-button' onClick={()=> addCreditTransaction(clientId)} >Guardar</button>
+      <button className='pay-button' onClick={()=> addTableTransaction(tableId)} >Guardar</button>
     </div>
   );
 }
 
-export default AddClientProductSidebar;
+export default AddTableProductsSidebar;

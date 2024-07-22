@@ -12,6 +12,8 @@ function ChecksCards({ checks }) {
                     <p>Fecha: {check.fecha}</p>
                     <p>Método de Pago: {check.metodo_pago}</p>
                     <p>Total: {check.total}</p>
+                    <p>Propina: {check.propina}</p>
+                    {check.numero_mesa !== 0 && <p>Mesa: {check.numero_mesa}</p>}
                     <h3>Detalles:</h3>
                     {check.detalles && check.detalles.length > 0 ? (
                         check.detalles.map((detalle, detalleIndex) => (

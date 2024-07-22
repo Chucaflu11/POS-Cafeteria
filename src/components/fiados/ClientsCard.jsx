@@ -83,7 +83,7 @@ function ClientsCard({ fetchedClients, fetchData }) {
                                         Pagar
                                     </button>
                                     {isClientPaymentModalOpen && (
-                                        <ClientPaymentModal closeClientPaymentModal={closeClientPaymentModal} debtId={cliente.debt_id} fetchData={fetchData} />
+                                        <ClientPaymentModal closeClientPaymentModal={closeClientPaymentModal} debtId={cliente.debt_id} totalDebt={cliente.total_debt} remainingDebt={cliente.remaining_debt} fetchData={fetchData} />
                                     )}
                                 </div>
                             </div>
