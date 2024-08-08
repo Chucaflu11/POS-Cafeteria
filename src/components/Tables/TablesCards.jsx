@@ -26,6 +26,37 @@ function TablesCards({ table, tableName, fetchData, tableId }) {
         setIsTablePaymentModalOpen(false);
     };
 
+    const printCocinaTicket = async (table) => {
+        const { products, total } = table;
+
+        let ticketText = '======= Cocina ========\n';
+        products.forEach((product, index) => {
+            ticketText += `${index + 1}. ${product.nombre_producto}\n`;
+        });
+        ticketText += '=======================\0';
+        
+        await invoke('print_voucher', { elements: ticketText });
+    };
+
+    const printGarzonTicket = async (table) => {
+        const { products, total } = table;
+        const subtotal = total;
+        const propina = subtotal * 0.1;
+        
+        let ticketText = '======= Boleta ========\n';
+        products.forEach((product, index) => {
+            ticketText += `${index + 1}. ${product.nombre_producto} - $${product.precio_producto}\n`;
+        });
+        ticketText += '\n';
+        ticketText += `Subtotal: $${subtotal}\n`;
+        ticketText += `Propina sugerida (10%): $${propina}\n`;
+        ticketText += `Total: $${total + propina}\n`;
+        ticketText += '=======================\0';
+    
+        await invoke('print_voucher', { elements: ticketText });
+    };
+    
+
     return (
         <div className="tables-cards">
                 <div className="tables-header">
@@ -43,11 +74,11 @@ function TablesCards({ table, tableName, fetchData, tableId }) {
                                 <AddTableProductsModal closeTableProductsModal={closeTableProductsModal} fetchData={fetchData} tableId={tableId} />
                             )}
                             
-                            <button>
+                            <button onClick={() => printCocinaTicket(table)}>
                                 Cocina Ticket
                             </button>
 
-                            <button>
+                            <button onClick={() => printGarzonTicket(table)}>
                                 Garzón Ticket
                             </button>
                             </div>

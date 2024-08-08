@@ -19,7 +19,6 @@ function ChecksCards({ checks }) {
                         check.detalles.map((detalle, detalleIndex) => (
                             <div key={detalleIndex} className='card-details'>
                                 <p>Nombre Producto: {detalle.nombre_producto}</p>
-                                <p>Cantidad: {detalle.cantidad}</p>
                                 <p>Precio Unitario: {detalle.precio_unitario}</p>
                             </div>
                         ))

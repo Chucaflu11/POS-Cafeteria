@@ -1,5 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+extern crate libc;
+use libc::wchar_t;
+
 use chrono::prelude::*;
 use rusqlite::{params, Connection, NO_PARAMS};
 use serde::{Deserialize, Serialize};
@@ -94,6 +97,10 @@ struct CierreCajaData {
 
 pub struct AppState {
     pub db: std::sync::Mutex<Option<Connection>>,
+}
+
+extern "C" {
+    fn print_document(text: *const wchar_t);
 }
 
 fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
@@ -1253,6 +1260,18 @@ fn send_timestamp() -> Result<String, String> {
     Ok(get_timestamp())
 }
 
+
+#[tauri::command]
+fn print_voucher(elements: &str) -> Result<(), String> {
+    let wtext: Vec<wchar_t> = elements.encode_utf16().collect();
+
+    unsafe {
+        print_document(wtext.as_ptr());
+        Ok(())
+    }
+
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(AppState {
@@ -1282,7 +1301,8 @@ fn main() {
             delete_category,
             delete_product,
             generate_final_report,
-            send_timestamp
+            send_timestamp,
+            print_voucher,
         ])
         .setup(|app| {
             let handle = app.handle();

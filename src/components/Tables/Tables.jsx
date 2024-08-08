@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { invoke } from '@tauri-apps/api';
 
-import TablesCards from './tablesCards';
+import TablesCards from './TablesCards.jsx';
 
 import '../../styles/Tables/Tables.css';
 
