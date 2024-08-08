@@ -79,6 +79,7 @@ function ClientPaymentModal({ closeClientPaymentModal, debtId, totalDebt, remain
                     <div className='tip-container'>
                         <label>Propina:</label>
                         <input className='tip-input' type="number" name="tip" value={tip} onChange={handleTipChange} placeholder="Propina" />
+                        <p> Total: ${ (isNaN(parseInt(partialPayment)) ? 0 : parseInt(partialPayment)) + (isNaN(tip) ? 0 : tip) }</p>
                     </div>
                     {error && <p style={{ color: 'red' }}>{error}</p>}
                     <div className='send-button-container'>
