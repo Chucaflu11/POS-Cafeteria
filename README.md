@@ -1,4 +1,4 @@
-# Cafetería del Ángel
+# Sistema de Caja
 
 ## Prerrequisitos
 
